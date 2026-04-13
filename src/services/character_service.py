@@ -58,17 +58,19 @@ class Equipment:
     A single item in a character's inventory.
 
     Attributes:
-        name:      Item name (e.g., "Torch", "Healing potion").
-        quantity:  How many of this item are carried. Default 1.
-        weight:    Item weight in pounds. Default 0.0 (negligible).
-        charges:   Number of uses/charges remaining. -1 means unlimited/N/A.
-        source:    Where the item came from (e.g., "starting equipment", "looted").
+        name:       Item name (e.g., "Torch", "Healing potion").
+        quantity:   How many of this item are carried. Default 1.
+        weight:     Item weight in pounds. Default 0.0 (negligible).
+        charges:    Number of uses/charges remaining. -1 means unlimited/N/A.
+        source:     Where the item came from (e.g., "starting equipment", "looted").
+        conditions: Conditions this item grants while equipped/active.
     """
     name: str
     quantity: int = 1
     weight: float = 0.0
     charges: int = -1          # -1 = not applicable
     source: str = "starting equipment"
+    conditions: list["Condition"] = field(default_factory=list)
 
 
 @dataclass
@@ -111,11 +113,12 @@ class EquipmentSchema(Schema):
     class Meta:
         unknown = EXCLUDE
 
-    name     = fields.Str(load_default="unknown")
-    quantity = fields.Int(load_default=1)
-    weight   = fields.Float(load_default=0.0)
-    charges  = fields.Int(load_default=-1)
-    source   = fields.Str(load_default="starting equipment")
+    name       = fields.Str(load_default="unknown")
+    quantity   = fields.Int(load_default=1)
+    weight     = fields.Float(load_default=0.0)
+    charges    = fields.Int(load_default=-1)
+    source     = fields.Str(load_default="starting equipment")
+    conditions = fields.List(fields.Nested(lambda: ConditionSchema()), load_default=list)
 
     @post_load
     def make(self, data, **kwargs) -> Equipment:
@@ -220,6 +223,11 @@ def format_sheet(sheet: CharacterSheet) -> str:
                 parts.append(f"from: {e.source}")
             detail = "  (" + ", ".join(p for p in parts if p) + ")" if any(parts) else ""
             lines.append(f"  - {e.name}{detail}")
+            for c in e.conditions:
+                rounds_str = "indefinite" if c.rounds == -1 else f"{c.rounds} round(s)"
+                lines.append(
+                    f"      [{c.name}] {rounds_str} | {c.stat} {c.modifier}"
+                )
     if sheet.conditions:
         lines.append("")
         lines.append("Conditions:")
