@@ -1,0 +1,21 @@
+{
+  "name": "Bram Ironfoot",
+  "occupation": "Dwarven Miner",
+  "abilities": {
+    "Strength": 14,
+    "Agility": 9,
+    "Stamina": 13,
+    "Personality": 7,
+    "Intelligence": 8,
+    "Luck": 11
+  },
+  "hp": 6,
+  "ac": 12,
+  "equipment": [
+    "pickaxe",
+    "torch (x3)",
+    "rope (50 ft)",
+    "iron rations (3 days)",
+    "2 gp"
+  ]
+}

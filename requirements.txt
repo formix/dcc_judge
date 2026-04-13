@@ -1,0 +1,8 @@
+# Dice rolling MCP server
+mcp>=1.5.0
+
+# Ollama Python client (tool-calling support)
+ollama>=0.3.0
+
+# Rich CLI output (panels, colours, prompts)
+rich>=13.0.0
