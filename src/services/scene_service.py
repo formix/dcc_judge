@@ -17,6 +17,10 @@ from services.character_service import CharacterSheet, Equipment, Condition
 
 _party: list[CharacterSheet] = []
 
+_scene: dict = {
+
+}
+
 # ---------------------------------------------------------------------------
 # Internal helpers
 # ---------------------------------------------------------------------------
