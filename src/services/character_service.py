@@ -21,7 +21,7 @@ SLOTS: list[str] = [
     "head", "shoulder", "back", "body",
     "weapon", "shield",
     "ring_left", "ring_right",
-    "neck", "feet",
+    "neck", "feet", "hands"
 ]
 
 
