@@ -159,6 +159,25 @@ def add_party_member_condition(
 
 
 @mcp.tool()
+def get_leader() -> str:
+    """
+    Return a short description of the party leader.
+
+    The leader is always the first character in the party and the sole
+    protagonist the GM should focus narration on.
+    """
+    ch = _scene.get_leader()
+    if ch is None:
+        return "The party is empty — no leader."
+    calling_str = ch.calling or "0-level funnel"
+    return (
+        f"LEADER: {ch.name} — {ch.race} {ch.gender} {ch.alignment} "
+        f"{ch.occupation} ({calling_str}). "
+        "Narrate the session through this character's perspective."
+    )
+
+
+@mcp.tool()
 def remove_party_member_condition(name: str, condition_name: str) -> str:
     """
     Remove a condition from a party member.

@@ -208,14 +208,20 @@ def remove_condition(name: str, condition_name: str) -> tuple[CharacterSheet, in
     return ch, before - len(ch.conditions)
 
 
+def get_leader() -> CharacterSheet | None:
+    """Return the party leader (first character), or None if the party is empty."""
+    return _party[0] if _party else None
+
+
 def format_party() -> str:
     """Return a human-readable summary of the entire party."""
     if not _party:
         return "The party is empty."
     lines = [f"Party — {len(_party)} adventurer(s):", ""]
-    for ch in _party:
+    for idx, ch in enumerate(_party):
         calling_str = ch.calling or "none (0-level funnel)"
-        lines.append(f"  {ch.name}")
+        leader_tag = " (leader)" if idx == 0 else ""
+        lines.append(f"  {ch.name}{leader_tag}")
         lines.append(f"    Race: {ch.race}   Gender: {ch.gender}   Alignment: {ch.alignment}")
         lines.append(f"    Occupation: {ch.occupation}   Calling: {calling_str}")
         lines.append(f"    HP: {ch.hp}   AC: {ch.ac}   Level: {ch.level}")

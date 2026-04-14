@@ -23,6 +23,7 @@ import contextlib
 import json
 import os
 import random
+import re
 import sys
 
 import ollama
@@ -64,6 +65,13 @@ ABSOLUTE RULES — NEVER BREAK THESE:
    replies. No parenthetical asides like "(Grimdar's voice echoes…)" or \
    "(awaiting your response)". Speak only as the GM narrating to the players.
 6. After a tool returns a result, narrate it dramatically before continuing.
+
+NARRATION FOCUS:
+- The party always has one leader: the first character listed. Unless the character \
+  name is specified by the player, centre all narration on the leader: address \
+  actions, rolls, and consequences through their perspective. Mention other party \
+  members only when strictly necessary; keep them in the background to simplify the \
+  narrative.
 
 DCC DICE CHAIN (weakest → strongest):
   d3 → d4 → d5 → d6 → d7 → d8 → d10 → d12 → d14 → d16 → d20 → d24 → d30 → d100
@@ -118,10 +126,20 @@ def print_banner(model: str) -> None:
     console.print()
 
 
+def _strip_asides(text: str) -> str:
+    """Remove parenthetical asides and bracketed meta-commentary from GM output."""
+    # Strip (...) and [...] spans that span a single line (model self-reminders)
+    text = re.sub(r"\s*\([^)]{0,200}\)", "", text)
+    text = re.sub(r"\s*\[[^\]]{0,200}\]", "", text)
+    # Collapse any resulting blank lines (more than one in a row)
+    text = re.sub(r"\n{3,}", "\n\n", text)
+    return text.strip()
+
+
 def print_gm(text: str) -> None:
     console.print(
         Panel(
-            text,
+            _strip_asides(text),
             title="[bold red]⚔  GRIMDAR THE UNYIELDING  ⚔[/bold red]",
             border_style="red",
             padding=(1, 2),
@@ -338,13 +356,20 @@ async def run(model: str) -> None:
         )
         console.print(party_text, highlight=False)
         console.print(Rule(style="dark_red"))
+        # Identify the leader via the dedicated MCP tool.
+        leader_result = await scene_session.call_tool("get_leader", arguments={})
+        leader_desc = "\n".join(
+            item.text for item in leader_result.content if isinstance(item, TextContent)
+        )
+
         messages: list[dict] = [{"role": "system", "content": SYSTEM_PROMPT}]
 
         # ---- Opening scene (no user input needed) ----
-        console.print("[dim]Summoning the Game Master…[/dim]\n")
+        console.print("[dim]Summoning the Game Master\u2026[/dim]\n")
         messages.append({
             "role": "user",
             "content": (
+                f"{leader_desc}\n\n"
                 "The following 0-level party has already been assembled — "
                 "do NOT call any tools yet, just begin the session with a "
                 "dramatic opening scene that weaves in their occupations and trade goods:\n\n"
