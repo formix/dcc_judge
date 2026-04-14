@@ -16,6 +16,15 @@ from marshmallow import Schema, fields, post_load, pre_load, EXCLUDE
 from rulesets.dcc import CHARACTER_ABILITIES, ABILITY_MODIFIERS
 
 
+# Ordered slot names. ring_left / ring_right are the two ring slots.
+SLOTS: list[str] = [
+    "head", "shoulder", "back", "body",
+    "weapon", "shield",
+    "ring_left", "ring_right",
+    "neck", "feet",
+]
+
+
 # ---------------------------------------------------------------------------
 # Dataclasses
 # ---------------------------------------------------------------------------
@@ -30,13 +39,13 @@ class Condition:
         rounds:      How many rounds remain. -1 means indefinite.
         source:      What caused it (e.g., "Giant Spider bite").
         modifier:    Optional numeric modifier to apply while the condition is active (e.g., -2 to all rolls).
-        type:        Optional category for the condition (e.g., "poison", "curse", "buff") that can be used for filtering or special interactions.
+        tags:        Category tags for the condition (e.g., ["armor"], ["poison", "curse"]) used for filtering or special interactions.
         """
     name: str
     rounds: int          # -1 = indefinite
     source: str
     modifier: int = 0
-    type: str = ""
+    tags: list[str] = field(default_factory=list)
 
 
 @dataclass
@@ -51,6 +60,7 @@ class Equipment:
         charges:    Number of uses/charges remaining. -1 means unlimited/N/A.
         source:     Where the item came from (e.g., "starting equipment", "looted").
         conditions: Conditions this item grants while equipped/active.
+        tags:       Category tags for the item (e.g., ["armor"], ["weapon"]) used for filtering or special interactions.
     """
     name: str
     quantity: int = 1
@@ -58,6 +68,7 @@ class Equipment:
     charges: int = -1          # -1 = not applicable
     source: str = "starting equipment"
     conditions: list["Condition"] = field(default_factory=list)
+    tags: list[str] = field(default_factory=list)
 
 
 @dataclass
@@ -77,11 +88,14 @@ class CharacterSheet:
     equipment: list[Equipment] = field(default_factory=list)
     conditions: list[Condition] = field(default_factory=list)
     notes: list[str] = field(default_factory=list)
+    slots: dict[str, Equipment | None] = field(
+        default_factory=lambda: {s: None for s in SLOTS}
+    )
 
     def get_ac(self) -> int:
         """Compute AC = 10 + Agility modifier + sum of armor modifiers.
 
-        Armor modifiers are drawn from conditions of type 'armor' on both
+        Armor modifiers are drawn from conditions tagged 'armor' on both
         equipped items and the character directly.
         """
         agility_mod = ABILITY_MODIFIERS.get(self.abilities.get("Agility", 10), 0)
@@ -89,13 +103,88 @@ class CharacterSheet:
             c.modifier
             for eq in self.equipment
             for c in eq.conditions
-            if c.type == "armor"
+            if "armor" in c.tags
+        ) + sum(
+            c.modifier
+            for eq in self.slots.values()
+            if eq is not None
+            for c in eq.conditions
+            if "armor" in c.tags
         ) + sum(
             c.modifier
             for c in self.conditions
-            if c.type == "armor"
+            if "armor" in c.tags
         )
         return 10 + agility_mod + armor_mod
+
+    def equip(self, item_name: str, slot: str) -> Equipment:
+        """
+        Move an item from the equipment list into a slot.
+
+        Rules:
+        - Item must have tags ``wearable`` and the slot name (or ``ring`` for
+          ring_left / ring_right).
+        - ``two-handed`` items require both ``weapon`` and ``shield`` slots
+          to be empty; equipping them fills only ``weapon`` (shield stays
+          blocked by convention — callers may enforce the shield restriction).
+        - Each slot holds at most one item; the previous occupant is returned
+          to the equipment list.
+
+        Raises:
+            KeyError:   item_name not found in equipment list.
+            ValueError: invalid slot, missing wearable/slot tags, or
+                        two-handed conflict.
+        """
+        if slot not in SLOTS:
+            raise ValueError(f"Unknown slot '{slot}'. Valid slots: {', '.join(SLOTS)}")
+
+        # Find the item in the unequipped list.
+        item = next((e for e in self.equipment if e.name.lower() == item_name.lower()), None)
+        if item is None:
+            raise KeyError(f"'{item_name}' not found in equipment list.")
+
+        if "wearable" not in item.tags:
+            raise ValueError(f"'{item.name}' is not wearable (missing 'wearable' tag).")
+
+        # Determine the required tag for the target slot.
+        required_tag = "ring" if slot in ("ring_left", "ring_right") else slot
+        if required_tag not in item.tags:
+            raise ValueError(
+                f"'{item.name}' cannot go in the '{slot}' slot "
+                f"(missing '{required_tag}' tag)."
+            )
+
+        # Two-handed check.
+        if "two-handed" in item.tags:
+            if self.slots.get("weapon") is not None or self.slots.get("shield") is not None:
+                raise ValueError(
+                    "Two-handed weapon requires both 'weapon' and 'shield' slots to be empty."
+                )
+
+        # Return the current occupant to inventory.
+        if self.slots[slot] is not None:
+            self.equipment.append(self.slots[slot])  # type: ignore[arg-type]
+
+        self.equipment.remove(item)
+        self.slots[slot] = item
+        return item
+
+    def unequip(self, slot: str) -> Equipment:
+        """
+        Remove the item from *slot* and return it to the equipment list.
+
+        Raises:
+            KeyError:   slot name is not valid.
+            ValueError: slot is already empty.
+        """
+        if slot not in SLOTS:
+            raise ValueError(f"Unknown slot '{slot}'. Valid slots: {', '.join(SLOTS)}")
+        item = self.slots[slot]
+        if item is None:
+            raise ValueError(f"Slot '{slot}' is already empty.")
+        self.slots[slot] = None
+        self.equipment.append(item)
+        return item
 
 
 # ---------------------------------------------------------------------------
@@ -109,6 +198,8 @@ class ConditionSchema(Schema):
     name        = fields.Str(load_default="unknown")
     rounds      = fields.Int(load_default=-1)
     source      = fields.Str(load_default="")
+    modifier    = fields.Int(load_default=0)
+    tags        = fields.List(fields.Str(), load_default=list)
 
     @post_load
     def make(self, data, **kwargs) -> Condition:
@@ -148,6 +239,11 @@ class CharacterSheetSchema(Schema):
     equipment  = fields.List(fields.Nested(EquipmentSchema), load_default=list)
     conditions = fields.List(fields.Nested(ConditionSchema), load_default=list)
     notes      = fields.List(fields.Str(), load_default=list)
+    slots      = fields.Dict(
+        keys=fields.Str(),
+        values=fields.Nested(EquipmentSchema, allow_none=True),
+        load_default=dict,
+    )
 
     @pre_load
     def derive_calling(self, data, **kwargs) -> dict:
@@ -160,6 +256,10 @@ class CharacterSheetSchema(Schema):
     def make(self, data, **kwargs) -> CharacterSheet:
         if data["abilities"] is None:
             data["abilities"] = {a: 10 for a in CHARACTER_ABILITIES}
+        # Ensure all slots are present even when loading old data.
+        base_slots: dict[str, Equipment | None] = {s: None for s in SLOTS}
+        base_slots.update(data.get("slots") or {})
+        data["slots"] = base_slots
         return CharacterSheet(**data)
 
 
@@ -240,6 +340,12 @@ def format_sheet(sheet: CharacterSheet) -> str:
         for c in sheet.conditions:
             rounds_str = "indefinite" if c.rounds == -1 else f"{c.rounds} round(s)"
             lines.append(f"  [{c.name}] {rounds_str} | source: {c.source}")
+    worn = {s: e for s, e in sheet.slots.items() if e is not None}
+    if worn:
+        lines.append("")
+        lines.append("Worn:")
+        for slot, e in worn.items():
+            lines.append(f"  {slot:12s}: {e.name}")
     if sheet.notes:
         lines.append("")
         lines.append("Notes:")

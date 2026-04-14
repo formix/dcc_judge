@@ -229,6 +229,10 @@ def format_party() -> str:
         if ch.conditions:
             conds = ", ".join(c.name for c in ch.conditions)
             lines.append(f"    Conditions: {conds}")
+        worn = {s: e for s, e in ch.slots.items() if e is not None}
+        if worn:
+            worn_str = ", ".join(f"{s}: {e.name}" for s, e in worn.items())
+            lines.append(f"    Worn: {worn_str}")
         if ch.notes:
             lines.append("    Notes: " + "\n           ".join(ch.notes))
         lines.append("")

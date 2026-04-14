@@ -151,6 +151,8 @@ def add_condition(
     name: str,
     source: str = "",
     rounds: int = -1,
+    modifier: int = 0,
+    tags: list[str] | None = None,
 ) -> str:
     """
     Apply a temporary condition to the character.
@@ -159,6 +161,8 @@ def add_condition(
         name:        Label for the condition (e.g., "poisoned", "blinded").
         source:      What caused the condition (e.g., "Giant Spider bite").
         rounds:      Duration in rounds. Use −1 for indefinite.
+        modifier:    Numeric modifier while active (e.g., -2).
+        tags:        Category tags (e.g., ["armor"], ["poison", "curse"]).
 
     Returns confirmation, or an error string.
     """
@@ -168,6 +172,8 @@ def add_condition(
             name=name,
             rounds=rounds,
             source=source,
+            modifier=modifier,
+            tags=tags or [],
         )
         sheet.conditions.append(condition)
         _save_sheet(sheet)

@@ -132,6 +132,8 @@ def add_party_member_condition(
     condition_name: str,
     source: str = "",
     rounds: int = -1,
+    modifier: int = 0,
+    tags: list[str] | None = None,
 ) -> str:
     """
     Apply a temporary condition to a party member.
@@ -141,17 +143,69 @@ def add_party_member_condition(
         condition_name: Label for the condition (e.g., "poisoned", "on fire").
         source:         What caused it (e.g., "Giant Spider bite").
         rounds:         Duration in rounds; -1 means indefinite.
+        modifier:       Numeric modifier while active (e.g., -2).
+        tags:           Category tags (e.g., ["armor"], ["poison", "curse"]).
     """
     try:
         condition = Condition(
             name=condition_name,
             rounds=rounds,
             source=source,
+            modifier=modifier,
+            tags=tags or [],
         )
         ch = _scene.add_condition(name, condition)
         duration = "indefinitely" if rounds == -1 else f"for {rounds} round(s)"
         return f"Condition '{condition_name}' applied to {ch.name} {duration}."
     except KeyError as exc:
+        return f"[Scene error] {exc}"
+
+
+@mcp.tool()
+def unequip_party_member_item(name: str, slot: str) -> str:
+    """
+    Remove the item from a party member's worn slot and return it to their equipment list.
+
+    Parameters:
+        name: Character name (case-insensitive).
+        slot: Slot to unequip. Valid slots: head, shoulder, back, body,
+              weapon, shield, ring_left, ring_right, neck, feet.
+    """
+    ch = _scene.get_character(name)
+    if ch is None:
+        return f"[Scene error] Character '{name}' not found in party."
+    try:
+        item = ch.unequip(slot)
+        return f"'{item.name}' unequipped from slot '{slot}' and returned to {ch.name}'s inventory."
+    except (KeyError, ValueError) as exc:
+        return f"[Scene error] {exc}"
+
+
+@mcp.tool()
+def equip_party_member_item(name: str, item_name: str, slot: str) -> str:
+    """
+    Move an item from a party member's equipment list into a worn slot.
+
+    Parameters:
+        name:      Character name (case-insensitive).
+        item_name: Exact name of the item in the character's equipment list.
+        slot:      Target slot. Valid slots: head, shoulder, back, body,
+                   weapon, shield, ring_left, ring_right, neck, feet.
+                   Items tagged 'ring' may go in ring_left or ring_right.
+                   Items tagged 'two-handed' require both weapon and shield
+                   slots to be empty.
+
+    The item must have the 'wearable' tag and the matching slot tag
+    (or 'ring' for ring slots). Any previous occupant is returned to
+    the equipment list.
+    """
+    ch = _scene.get_character(name)
+    if ch is None:
+        return f"[Scene error] Character '{name}' not found in party."
+    try:
+        item = ch.equip(item_name, slot)
+        return f"'{item.name}' equipped in slot '{slot}' by {ch.name}."
+    except (KeyError, ValueError) as exc:
         return f"[Scene error] {exc}"
 
 
