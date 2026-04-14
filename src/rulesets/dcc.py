@@ -99,6 +99,41 @@ CHARACTER_OCCUPATIONS: dict[str, list[tuple[str, str, str]]] = {
     ],
 }
 
+# Weapon stats. Peasant-tool entries use the damage and cost of the like weapon.
+# cost_cp is in copper pieces: 1 gp = 100 cp, 1 sp = 10 cp.
+WEAPONS: list[Equipment] = [
+    # ── Core weapons ─────────────────────────────────────────────────────────
+    Equipment(name="Club",        cost_cp=3,     damage="1d4"),  #   3 cp
+    Equipment(name="Dagger",      cost_cp=300,   damage="1d4"),  #   3 gp
+    Equipment(name="Dart",        cost_cp=5,     damage="1d4"),  #   5 cp
+    Equipment(name="Handaxe",     cost_cp=400,   damage="1d6"),  #   4 gp
+    Equipment(name="Hammer",      cost_cp=500,   damage="1d8"),  #   5 gp  (warhammer; Dwarf stonemason)
+    Equipment(name="Longsword",   cost_cp=1000,  damage="1d8"),  #  10 gp
+    Equipment(name="Mace",        cost_cp=500,   damage="1d6"),  #   5 gp
+    Equipment(name="Short sword", cost_cp=700,   damage="1d6"),  #   7 gp
+    Equipment(name="Shortbow",    cost_cp=2500,  damage="1d6"),  #  25 gp
+    Equipment(name="Sling",       cost_cp=200,   damage="1d4"),  #   2 gp
+    Equipment(name="Spear",       cost_cp=300,   damage="1d8"),  #   3 gp
+    Equipment(name="Staff",       cost_cp=50,    damage="1d4"),  #   5 sp
+    # ── Peasant tools (damage and cost of like weapon) ────────────────────────
+    Equipment(name="Awl (as dagger)",       cost_cp=300,  damage="1d4"),  # like Dagger
+    Equipment(name="Chisel (as dagger)",    cost_cp=300,  damage="1d4"),  # like Dagger
+    Equipment(name="Cleaver (as axe)",      cost_cp=400,  damage="1d6"),  # like Handaxe
+    Equipment(name="Crowbar (as club)",     cost_cp=3,    damage="1d4"),  # like Club
+    Equipment(name="Cudgel (as staff)",     cost_cp=50,   damage="1d4"),  # like Staff
+    Equipment(name="Hammer (as club)",      cost_cp=3,    damage="1d4"),  # like Club
+    Equipment(name="Knife (as dagger)",     cost_cp=300,  damage="1d4"),  # like Dagger
+    Equipment(name="Pick (as club)",        cost_cp=3,    damage="1d4"),  # like Club
+    Equipment(name="Pitchfork (as spear)",  cost_cp=300,  damage="1d8"),  # like Spear
+    Equipment(name="Pole (as staff)",       cost_cp=50,   damage="1d4"),  # like Staff
+    Equipment(name="Quill (as dart)",       cost_cp=5,    damage="1d4"),  # like Dart
+    Equipment(name="Razor (as dagger)",     cost_cp=300,  damage="1d4"),  # like Dagger
+    Equipment(name="Scissors (as dagger)",  cost_cp=300,  damage="1d4"),  # like Dagger
+    Equipment(name="Shovel (as staff)",     cost_cp=50,   damage="1d4"),  # like Staff
+    Equipment(name="Stick (as club)",       cost_cp=3,    damage="1d4"),  # like Club
+    Equipment(name="Trowel (as dagger)",    cost_cp=300,  damage="1d4"),  # like Dagger
+]
+
 
 # All DCC classes. Humans choose from Warrior/Wizard/Cleric/Thief.
 # Non-human races (Elf, Halfling, Dwarf) use their race name as their class.

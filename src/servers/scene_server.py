@@ -152,7 +152,7 @@ def add_party_member_condition(
             rounds=rounds,
             source=source,
             modifier=modifier,
-            tags=tags or [],
+            tags=set(tags) if tags else set(),
         )
         ch = _scene.add_condition(name, condition)
         duration = "indefinitely" if rounds == -1 else f"for {rounds} round(s)"

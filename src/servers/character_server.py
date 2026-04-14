@@ -173,7 +173,7 @@ def add_condition(
             rounds=rounds,
             source=source,
             modifier=modifier,
-            tags=tags or [],
+            tags=set(tags) if tags else set(),
         )
         sheet.conditions.append(condition)
         _save_sheet(sheet)
