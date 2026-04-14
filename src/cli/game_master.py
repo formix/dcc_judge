@@ -2,7 +2,7 @@
 DCC Game Master — Command-Line Interface
 
 An old-school Dungeon Crawl Classics game master powered by Ollama and the
-DCC Dice Roller and Character Sheet MCP servers. The GM uses real dice rolls (never invented ones)
+DCC Dice Roller and Scene Manager MCP servers. The GM uses real dice rolls (never invented ones)
 for all in-game events via the MCP tool calls.
 
 Usage:
@@ -22,6 +22,7 @@ import asyncio
 import contextlib
 import json
 import os
+import re
 import sys
 
 import ollama
@@ -51,9 +52,18 @@ ABSOLUTE RULES — NEVER BREAK THESE:
 1. You MUST use the dice-rolling tools for EVERY roll. Never invent or guess a \
    dice result. If a roll is required, call a tool first, then narrate the outcome.
 2. Use roll_dice for attacks, saves, skill checks, damage, and any ad-hoc roll. \
-   Use roll_ability_scores when setting up or rolling new characters. \
+   Use roll_ability_scores when generating new ability scores. \
    Use roll_dice_chain when a DCC rule steps a die up or down the chain.
-3. After a tool returns a result, narrate it dramatically before continuing.
+3. Use list_party to refresh your knowledge of the party mid-session. Use \
+   update_party_member_hp for damage or healing. Use add_party_member_condition / \
+   remove_party_member_condition for status effects. Never invent party state — \
+   always read it from tools when you are unsure.
+4. NEVER output raw JSON or tool-call syntax as text. Tool calls must be made \
+   through the tool interface, never typed into your reply.
+5. NEVER include stage directions, inner thoughts, or meta-commentary in your \
+   replies. No parenthetical asides like "(Grimdar's voice echoes…)" or \
+   "(awaiting your response)". Speak only as the GM narrating to the players.
+6. After a tool returns a result, narrate it dramatically before continuing.
 
 DCC DICE CHAIN (weakest → strongest):
   d3 → d4 → d5 → d6 → d7 → d8 → d10 → d12 → d14 → d16 → d20 → d24 → d30 → d100
@@ -214,9 +224,9 @@ async def run(model: str) -> None:
         command=sys.executable,
         args=[os.path.join(servers_dir, "dice_server.py")],
     )
-    char_params = StdioServerParameters(
+    scene_params = StdioServerParameters(
         command=sys.executable,
-        args=[os.path.join(servers_dir, "character_server.py")],
+        args=[os.path.join(servers_dir, "scene_server.py")],
     )
 
     print_banner(model)
@@ -227,17 +237,17 @@ async def run(model: str) -> None:
         dice_session = await stack.enter_async_context(ClientSession(r1, w1))
         await dice_session.initialize()
 
-        r2, w2 = await stack.enter_async_context(stdio_client(char_params))
-        char_session = await stack.enter_async_context(ClientSession(r2, w2))
-        await char_session.initialize()
+        r3, w3 = await stack.enter_async_context(stdio_client(scene_params))
+        scene_session = await stack.enter_async_context(ClientSession(r3, w3))
+        await scene_session.initialize()
 
         # Merge tools from both servers; build name→session routing map
-        dice_tools = (await dice_session.list_tools()).tools
-        char_tools = (await char_session.list_tools()).tools
-        all_tools = dice_tools + char_tools
+        dice_tools  = (await dice_session.list_tools()).tools
+        scene_tools = (await scene_session.list_tools()).tools
+        all_tools = dice_tools + scene_tools
         tool_sessions: dict[str, ClientSession] = {
-            **{t.name: dice_session for t in dice_tools},
-            **{t.name: char_session for t in char_tools},
+            **{t.name: dice_session  for t in dice_tools},
+            **{t.name: scene_session for t in scene_tools},
         }
         ollama_tools = mcp_tools_to_ollama(all_tools)
 
@@ -245,17 +255,78 @@ async def run(model: str) -> None:
         console.print(f"[dim]Tools available: {', '.join(tool_names)}[/dim]")
         console.print(Rule(style="dark_red"))
 
+        # Fetch the freshly generated (unnamed) party from the scene server.
+        console.print("[dim]Rolling up the party…[/dim]")
+        stubs_result = await scene_session.call_tool("get_party_stubs", arguments={})
+        stubs_text = "\n".join(
+            item.text for item in stubs_result.content if isinstance(item, TextContent)
+        )
+        stubs: list[dict] = json.loads(stubs_text)
+
+        # Ask the LLM to generate thematic names for each character.
+        console.print("[dim]Generating character names…[/dim]")
+        stubs_desc = "\n".join(
+            f"- id={s['id']}  race={s['race']}  occupation={s['occupation']}"
+            for s in stubs
+        )
+        name_prompt = (
+            "You are a fantasy name generator for a Dungeon Crawl Classics game. "
+            "Given the characters below, reply with ONLY a JSON array of strings — one "
+            "short, culturally fitting first name per character, in the same order "
+            "they appear. Names must fit the character's race and occupation. "
+            "Reply with nothing else — no explanation, no markdown, just the JSON array.\n\n"
+            + stubs_desc
+        )
+        name_response = ollama.chat(
+            model=model,
+            messages=[{"role": "user", "content": name_prompt}],
+        )
+        raw = (name_response.message.content or "").strip()
+        # Extract the JSON array even if the model adds surrounding text.
+        match = re.search(r"\[.*?\]", raw, re.DOTALL)
+        if match:
+            try:
+                names: list[str] = json.loads(match.group())
+            except json.JSONDecodeError:
+                names = []
+        else:
+            names = []
+
+        # Rename each character via the scene server MCP tool.
+        for stub, name_str in zip(stubs, names):
+            await scene_session.call_tool(
+                "rename_party_member",
+                arguments={"character_id": stub["id"], "new_name": name_str.strip()},
+            )
+
+        # Fetch the now-named party for display and the opening prompt.
+        party_result = await scene_session.call_tool("list_party", arguments={})
+        party_text = "\n".join(
+            item.text for item in party_result.content if isinstance(item, TextContent)
+        )
+        console.print(party_text)
+        console.print(Rule(style="dark_red"))
         messages: list[dict] = [{"role": "system", "content": SYSTEM_PROMPT}]
 
         # ---- Opening scene (no user input needed) ----
         console.print("[dim]Summoning the Game Master…[/dim]\n")
-        messages.append({"role": "user", "content": "Begin the session."})
+        messages.append({
+            "role": "user",
+            "content": (
+                "The following 0-level party has already been assembled — "
+                "do NOT call any tools yet, just begin the session with a "
+                "dramatic opening scene that weaves in their occupations and trade goods:\n\n"
+                + party_text
+            ),
+        })
 
         try:
             opening = ollama.chat(
                 model=model,
                 messages=messages,
-                tools=ollama_tools,
+                # No tools on the opening call — the party is already in the
+                # message, so the model has nothing to look up and cannot
+                # accidentally emit a tool-call instead of narrating.
             )
         except ollama.ResponseError as exc:
             console.print(
@@ -265,9 +336,7 @@ async def run(model: str) -> None:
             )
             return
 
-        opening = await handle_tool_calls(
-            opening, messages, tool_sessions, model, ollama_tools
-        )
+        messages.append(build_assistant_message(opening.message))
         print_gm(opening.message.content or "")
         console.print()
 

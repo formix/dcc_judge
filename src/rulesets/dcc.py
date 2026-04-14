@@ -104,6 +104,8 @@ CHARACTER_OCCUPATIONS: dict[str, list[tuple[str, str, str]]] = {
 # Non-human races (Elf, Halfling, Dwarf) use their race name as their class.
 CHARACTER_CLASSES: list[str] = ["Warrior", "Wizard", "Cleric", "Thief", "Elf", "Halfling", "Dwarf"]
 
+ALIGNEMENTS: list[str] = ["Chaotic", "Neutral", "Lawful"]
+
 # The full DCC dice chain, weakest → strongest.
 DICE_CHAIN: list[int] = [3, 4, 5, 6, 7, 8, 10, 12, 14, 16, 20, 24, 30, 100]
 
@@ -116,3 +118,29 @@ CHARACTER_ABILITIES: list[str] = [
     "Intelligence",
     "Luck",         # Unique to DCC — used for Luck burns and checks
 ]
+
+ABILITY_MODIFIERS: dict[int, int] = {
+    3: -3,
+    4: -2,
+    5: -2,
+    6: -1,
+    7: -1,
+    8: -1,
+    9: 0,
+    10: 0,
+    11: 0,
+    12: 0,
+    13: +1,
+    14: +1,
+    15: +1,
+    16: +2,
+    17: +2,
+    18: +3,
+    19: +3,
+    20: +4,
+    21: +4,
+    22: +5,
+    23: +6,
+    24: +7,
+    25: +8,
+}
