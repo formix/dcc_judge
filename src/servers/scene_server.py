@@ -40,6 +40,36 @@ def get_party_stubs() -> str:
 
 
 @mcp.tool()
+def set_party_member_identity(
+    character_id: str,
+    name: str | None = None,
+    gender: str | None = None,
+    alignment: str | None = None,
+) -> str:
+    """
+    Set the name, gender, and/or alignment for a party member by their ID.
+
+    Parameters:
+        character_id: The 8-character internal ID of the character.
+        name:         New name (optional).
+        gender:       One of: Male, Female, Non-binary (optional).
+        alignment:    One of: Chaotic, Neutral, Lawful (optional).
+    """
+    try:
+        ch = _scene.set_character_identity(character_id, name=name, gender=gender, alignment=alignment)
+        parts = []
+        if name is not None:
+            parts.append(f"name='{ch.name}'")
+        if gender is not None:
+            parts.append(f"gender='{ch.gender}'")
+        if alignment is not None:
+            parts.append(f"alignment='{ch.alignment}'")
+        return f"Updated {ch.name}: {', '.join(parts)}."
+    except (KeyError, ValueError) as exc:
+        return f"[Scene error] {exc}"
+
+
+@mcp.tool()
 def rename_party_member(character_id: str, new_name: str) -> str:
     """
     Give a party member a proper name, identified by their short ID.

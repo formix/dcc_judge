@@ -22,6 +22,7 @@ import asyncio
 import contextlib
 import json
 import os
+import random
 import re
 import sys
 
@@ -299,12 +300,91 @@ async def run(model: str) -> None:
                 arguments={"character_id": stub["id"], "new_name": name_str.strip()},
             )
 
-        # Fetch the now-named party for display and the opening prompt.
+        # ---- Interactive identity step ----
+        # Re-fetch stubs so we have the LLM-generated names for display.
+        stubs_result = await scene_session.call_tool("get_party_stubs", arguments={})
+        stubs_text = "\n".join(
+            item.text for item in stubs_result.content if isinstance(item, TextContent)
+        )
+        stubs = json.loads(stubs_text)
+        # Also grab current party for names already assigned.
+        party_result = await scene_session.call_tool("list_party", arguments={})
+        named_party_text = "\n".join(
+            item.text for item in party_result.content if isinstance(item, TextContent)
+        )
+        # Parse the generated names from the listing (first word of each "  Name" line).
+        assigned_names: list[str] = []
+        for line in named_party_text.splitlines():
+            stripped = line.strip()
+            if stripped and not stripped.startswith(("Party", "Race", "HP", "Str", "Occ", "Equ", "Con", "Ab")):
+                # Top-level character line: "  Name"
+                if line.startswith("  ") and not line.startswith("    "):
+                    assigned_names.append(stripped)
+        # Pad in case parsing missed some.
+        while len(assigned_names) < len(stubs):
+            assigned_names.append(f"Character_{len(assigned_names)+1}")
+
+        _GENDERS    = ["Male", "Female", "Non-binary"]
+        _ALIGNMENTS = ["Chaotic", "Neutral", "Lawful"]
+
+        console.print(Rule(style="dark_red"))
+        console.print("[bold]Customise your adventurers[/bold]  [dim](press Enter to keep the suggested value)[/dim]\n")
+
+        for stub, suggested_name in zip(stubs, assigned_names):
+            console.print(
+                f"[bold cyan]{suggested_name}[/bold cyan]  "
+                f"[dim]{stub['race']} {stub['occupation']}[/dim]"
+            )
+
+            # Name
+            entered_name = Prompt.ask(
+                "  Name",
+                default=suggested_name,
+            ).strip() or suggested_name
+
+            # Gender
+            gender_opts = " / ".join(f"[{i+1}] {g}" for i, g in enumerate(_GENDERS))
+            entered_gender_raw = Prompt.ask(
+                f"  Gender  {gender_opts}",
+                default="",
+            ).strip()
+            if entered_gender_raw.isdigit() and 1 <= int(entered_gender_raw) <= len(_GENDERS):
+                entered_gender = _GENDERS[int(entered_gender_raw) - 1]
+            elif entered_gender_raw in _GENDERS:
+                entered_gender = entered_gender_raw
+            else:
+                entered_gender = random.choice(_GENDERS)
+
+            # Alignment
+            align_opts = " / ".join(f"[{i+1}] {a}" for i, a in enumerate(_ALIGNMENTS))
+            entered_align_raw = Prompt.ask(
+                f"  Alignment  {align_opts}",
+                default="",
+            ).strip()
+            if entered_align_raw.isdigit() and 1 <= int(entered_align_raw) <= len(_ALIGNMENTS):
+                entered_alignment = _ALIGNMENTS[int(entered_align_raw) - 1]
+            elif entered_align_raw in _ALIGNMENTS:
+                entered_alignment = entered_align_raw
+            else:
+                entered_alignment = random.choice(_ALIGNMENTS)
+
+            await scene_session.call_tool(
+                "set_party_member_identity",
+                arguments={
+                    "character_id": stub["id"],
+                    "name": entered_name,
+                    "gender": entered_gender,
+                    "alignment": entered_alignment,
+                },
+            )
+            console.print()
+
+        # Fetch the finalised party for display and the opening prompt.
         party_result = await scene_session.call_tool("list_party", arguments={})
         party_text = "\n".join(
             item.text for item in party_result.content if isinstance(item, TextContent)
         )
-        console.print(party_text)
+        console.print(party_text, highlight=False)
         console.print(Rule(style="dark_red"))
         messages: list[dict] = [{"role": "system", "content": SYSTEM_PROMPT}]
 

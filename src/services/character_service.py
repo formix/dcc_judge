@@ -67,6 +67,8 @@ class CharacterSheet:
     name: str = "Unknown Adventurer"
     occupation: str = "Peasant"
     race: str = "Human"           # must be in CHARACTER_RACES
+    gender: str = "Male"          # must be in GENDERS
+    alignment: str = "Neutral"    # must be in ALIGNEMENTS
     calling: str | None = None    # None = 0-level; non-humans use race as class
     level: int = 0
     abilities: dict[str, int] = field(
@@ -120,6 +122,8 @@ class CharacterSheetSchema(Schema):
     name       = fields.Str(load_default="Unknown Adventurer")
     occupation = fields.Str(load_default="Peasant")
     race       = fields.Str(load_default="Human")
+    gender     = fields.Str(load_default="Male")
+    alignment  = fields.Str(load_default="Neutral")
     calling    = fields.Str(load_default=None, allow_none=True)
     level      = fields.Int(load_default=0)
     abilities  = fields.Dict(keys=fields.Str(), values=fields.Int(), load_default=None)
@@ -187,7 +191,7 @@ def format_sheet(sheet: CharacterSheet) -> str:
     id_str = f"  [{sheet.id}]" if sheet.id else ""
     lines = [
         f"Name:       {sheet.name}{id_str}",
-        f"Race:       {sheet.race}",
+        f"Race:       {sheet.race}   Gender: {sheet.gender}   Alignment: {sheet.alignment}",
         f"Calling:    {class_str}  (Level {sheet.level})",
         f"Occupation: {sheet.occupation}",
         f"HP: {sheet.hp}   AC: {sheet.ac}",

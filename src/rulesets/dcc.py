@@ -106,6 +106,8 @@ CHARACTER_CLASSES: list[str] = ["Warrior", "Wizard", "Cleric", "Thief", "Elf", "
 
 ALIGNEMENTS: list[str] = ["Chaotic", "Neutral", "Lawful"]
 
+GENDERS: list[str] = ["Male", "Female", "Non-binary"]
+
 # The full DCC dice chain, weakest → strongest.
 DICE_CHAIN: list[int] = [3, 4, 5, 6, 7, 8, 10, 12, 14, 16, 20, 24, 30, 100]
 

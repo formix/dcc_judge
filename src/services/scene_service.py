@@ -8,7 +8,7 @@ State lives for the duration of the process; nothing is written to disk.
 import random
 import uuid
 
-from rulesets.dcc import CHARACTER_RACES, CHARACTER_OCCUPATIONS, CHARACTER_ABILITIES, ABILITY_MODIFIERS
+from rulesets.dcc import CHARACTER_RACES, CHARACTER_OCCUPATIONS, CHARACTER_ABILITIES, ABILITY_MODIFIERS, ALIGNEMENTS, GENDERS
 from services.character_service import CharacterSheet, Equipment, Condition
 
 # ---------------------------------------------------------------------------
@@ -65,6 +65,8 @@ def _generate_character(name: str) -> CharacterSheet:
         name=name,
         occupation=occ_name,
         race=race,
+        gender=random.choice(GENDERS),
+        alignment=random.choice(ALIGNEMENTS),
         calling=calling,
         level=0,
         abilities=abilities,
@@ -97,6 +99,35 @@ def get_party_stubs() -> list[dict]:
     with keys: id, race, occupation.
     """
     return [{"id": ch.id, "race": ch.race, "occupation": ch.occupation} for ch in _party]
+
+
+def set_character_identity(
+    character_id: str,
+    name: str | None = None,
+    gender: str | None = None,
+    alignment: str | None = None,
+) -> CharacterSheet:
+    """
+    Set name, gender, and/or alignment on a character identified by ID.
+
+    Raises:
+        KeyError: If no character with that ID exists.
+        ValueError: If gender or alignment are not valid DCC values.
+    """
+    ch = get_character_by_id(character_id)
+    if ch is None:
+        raise KeyError(f"No character with id '{character_id}' in party.")
+    if name is not None:
+        ch.name = name
+    if gender is not None:
+        if gender not in GENDERS:
+            raise ValueError(f"Invalid gender '{gender}'. Choose from: {', '.join(GENDERS)}")
+        ch.gender = gender
+    if alignment is not None:
+        if alignment not in ALIGNEMENTS:
+            raise ValueError(f"Invalid alignment '{alignment}'. Choose from: {', '.join(ALIGNEMENTS)}")
+        ch.alignment = alignment
+    return ch
 
 
 def get_character_by_id(character_id: str) -> CharacterSheet | None:
@@ -185,9 +216,10 @@ def format_party() -> str:
     for ch in _party:
         calling_str = ch.calling or "none (0-level funnel)"
         lines.append(f"  {ch.name}")
-        lines.append(f"    Race: {ch.race}   Occupation: {ch.occupation}   Calling: {calling_str}")
+        lines.append(f"    Race: {ch.race}   Gender: {ch.gender}   Alignment: {ch.alignment}")
+        lines.append(f"    Occupation: {ch.occupation}   Calling: {calling_str}")
         lines.append(f"    HP: {ch.hp}   AC: {ch.ac}   Level: {ch.level}")
-        ab_str = "  ".join(f"{k[:3]}:{v}" for k, v in ch.abilities.items())
+        ab_str = "  ".join(f"{k[:3]}: {v}" for k, v in ch.abilities.items())
         lines.append(f"    {ab_str}")
         if ch.equipment:
             items = ", ".join(e.name for e in ch.equipment)
