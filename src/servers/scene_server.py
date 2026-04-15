@@ -5,7 +5,7 @@ Wraps services/scene_service.py as MCP tools. Generates the party at startup
 and exposes tools for the LLM to read and modify party state throughout the
 session. State is kept in-memory for the lifetime of this subprocess.
 
-This file is executed as a subprocess entry point by game_master.py, so it
+This file is executed as a subprocess entry point by judge.py, so it
 inserts the src/ directory into sys.path to make sibling packages visible.
 """
 

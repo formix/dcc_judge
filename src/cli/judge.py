@@ -1,12 +1,12 @@
 """
-DCC Game Master — Command-Line Interface
+DCC JUDGE — Command-Line Interface
 
-An old-school Dungeon Crawl Classics game master powered by Ollama and the
-DCC Dice Roller and Scene Manager MCP servers. The GM uses real dice rolls (never invented ones)
+An old-school Dungeon Crawl Classics judge powered by Ollama and the
+DCC Dice Roller and Scene Manager MCP servers. The Judge uses real dice rolls (never invented ones)
 for all in-game events via the MCP tool calls.
 
 Usage:
-    python game_master.py [model]
+    python judge.py [model]
 
     model  — Any Ollama model that supports tool calling.
              Defaults to 'llama3.2'. Other good choices: llama3.1, qwen2.5,
@@ -51,7 +51,7 @@ from rulesets.dcc import GENDERS, ALIGNEMENTS
 DEFAULT_MODEL = "llama3.2"
 
 SYSTEM_PROMPT = """\
-You are GRIMDAR THE UNYIELDING, a grizzled and merciless Game Master running a \
+You are GRIMDAR THE UNYIELDING, a grizzled and merciless Judge running a \
 Dungeon Crawl Classics (DCC) RPG session. You speak with dramatic flair, drawing \
 heavily on Appendix N pulp fantasy: Conan, Elric, Fafhrd and the Gray Mouser. \
 You relish in describing grim dungeons, horrible monsters, and the glorious deaths \
@@ -70,8 +70,8 @@ ABSOLUTE RULES — NEVER BREAK THESE:
 4. NEVER output raw JSON or tool-call syntax as text. Tool calls must be made \
    through the tool interface, never typed into your reply.
 5. NEVER include stage directions, inner thoughts, or meta-commentary in your \
-   replies. No parenthetical asides like "(Grimdar's voice echoes…)" or \
-   "(awaiting your response)". Speak only as the GM narrating to the players.
+    replies. No parenthetical asides like "(Grimdar's voice echoes...)" or \
+    "(awaiting your response)". Speak only as the Judge narrating to the players.
 6. After a tool returns a result, narrate it dramatically before continuing.
 
 NARRATION FOCUS:
@@ -106,12 +106,12 @@ the players what they do.\
 """
 
 BANNER = r"""
- ██████╗ ███████╗██████╗     ███╗   ███╗ █████╗ ███████╗████████╗███████╗██████╗
- ██╔══██╗██╔════╝██╔════╝    ████╗ ████║██╔══██╗██╔════╝╚══██╔══╝██╔════╝██╔══██╗
- ██║  ██║██║     ██║         ██╔████╔██║███████║███████╗   ██║   █████╗  ██████╔╝
- ██║  ██║██║     ██║         ██║╚██╔╝██║██╔══██║╚════██║   ██║   ██╔══╝  ██╔══██╗
- ██████╔╝███████╗╚██████╗    ██║ ╚═╝ ██║██║  ██║███████║   ██║   ███████╗██║  ██║
- ╚═════╝ ╚══════╝ ╚═════╝    ╚═╝     ╚═╝╚═╝  ╚═╝╚══════╝   ╚═╝  ╚══════╝╚═╝  ╚═╝
+ ██████╗  ██████╗ ██████╗         ██╗██╗   ██╗██████╗  ██████╗ ███████╗
+ ██╔══██╗██╔════╝██╔════╝         ██║██║   ██║██╔══██╗██╔════╝ ██╔════╝
+ ██║  ██║██║     ██║              ██║██║   ██║██║  ██║██║  ███╗█████╗
+ ██║  ██║██║     ██║         ██   ██║██║   ██║██║  ██║██║   ██║██╔══╝
+ ██████╔╝╚██████╗╚██████╗    ╚█████╔╝╚██████╔╝██████╔╝╚██████╔╝███████╗
+ ╚═════╝  ╚═════╝ ╚═════╝     ╚════╝  ╚═════╝ ╚═════╝  ╚═════╝ ╚══════╝
 """
 
 # ---------------------------------------------------------------------------
@@ -127,7 +127,7 @@ def print_banner(model: str) -> None:
         Panel(
             f"[bold]Model:[/bold] [cyan]{model}[/cyan]   "
             "[bold]Type[/bold] [yellow]'quit'[/yellow] or [yellow]'exit'[/yellow] to end the session.",
-            title="[bold red]OLD-SCHOOL DCC GAME MASTER[/bold red]",
+            title="[bold red]OLD-SCHOOL DCC JUDGE[/bold red]",
             border_style="dark_red",
         )
     )
@@ -135,7 +135,7 @@ def print_banner(model: str) -> None:
 
 
 def _strip_asides(text: str) -> str:
-    """Remove parenthetical asides, bracketed meta-commentary, and leaked tool-call JSON from GM output."""
+    """Remove parenthetical asides, bracketed meta-commentary, and leaked tool-call JSON from Judge output."""
     # Strip (...) and [...] spans that span a single line (model self-reminders)
     text = re.sub(r"\s*\([^)]{0,200}\)", "", text)
     text = re.sub(r"\s*\[[^\]]{0,200}\]", "", text)
@@ -147,11 +147,11 @@ def _strip_asides(text: str) -> str:
     return text.strip()
 
 
-def print_gm(text: str) -> None:
+def print_judge(text: str) -> None:
     console.print(
         Panel(
             _strip_asides(text),
-            title="[bold red]⚔  GRIMDAR THE UNYIELDING  ⚔[/bold red]",
+            title="[bold red]⚖  GRIMDAR THE UNYIELDING, JUDGE  ⚖[/bold red]",
             border_style="red",
             padding=(1, 2),
         )
@@ -454,7 +454,7 @@ async def run(model: str) -> None:
         messages: list[dict] = [{"role": "system", "content": SYSTEM_PROMPT}]
 
         # ---- Opening scene (no user input needed) ----
-        console.print("[dim]Summoning the Game Master\u2026[/dim]\n")
+        console.print("[dim]Summoning the Judge...[/dim]\n")
         messages.append({
             "role": "user",
             "content": (
@@ -483,7 +483,7 @@ async def run(model: str) -> None:
             return
 
         messages.append(build_assistant_message(opening.message))
-        print_gm(opening.message.content or "")
+        print_judge(opening.message.content or "")
         console.print()
 
         # ---- Main chat loop ----
@@ -519,7 +519,7 @@ async def run(model: str) -> None:
             response = await handle_tool_calls(
                 response, messages, tool_sessions, model, ollama_tools
             )
-            print_gm(response.message.content or "")
+            print_judge(response.message.content or "")
             console.print()
 
 

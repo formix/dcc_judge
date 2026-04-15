@@ -6,7 +6,7 @@ raised by the service and returns it as a plain error string so the LLM
 can read and narrate it. All successful results are serialised to strings
 here; the service itself deals only in typed dataclasses.
 
-This file is executed as a subprocess entry point by game_master.py, so it
+This file is executed as a subprocess entry point by judge.py, so it
 inserts the src/ directory into sys.path to make the sibling packages visible.
 """
 

@@ -1,17 +1,17 @@
-# DCC Game Master — old-school CLI powered by Ollama + MCP
+# DCC JUDGE — old-school CLI powered by Ollama + MCP
 
-A command-line Dungeon Crawl Classics (DCC) game master backed by a local
+A command-line Dungeon Crawl Classics (DCC) judge backed by a local
 Ollama LLM. All dice rolls are delegated to a **Model Context Protocol**
 (MCP) server that exposes the full DCC funky dice set and a DCC-specific ability
 score roller. The GM never invents dice results — every roll is real.
 
 ```
- ██████╗ ███████╗██████╗     ███╗   ███╗ █████╗ ███████╗████████╗███████╗██████╗
- ██╔══██╗██╔════╝██╔════╝    ████╗ ████║██╔══██╗██╔════╝╚══██╔══╝██╔════╝██╔══██╗
- ██║  ██║██║     ██║         ██╔████╔██║███████║███████╗   ██║   █████╗  ██████╔╝
- ██║  ██║██║     ██║         ██║╚██╔╝██║██╔══██║╚════██║   ██║   ██╔══╝  ██╔══██╗
- ██████╔╝███████╗╚██████╗    ██║ ╚═╝ ██║██║  ██║███████║   ██║   ███████╗██║  ██║
- ╚═════╝ ╚══════╝ ╚═════╝    ╚═╝     ╚═╝╚═╝  ╚═╝╚══════╝   ╚═╝  ╚══════╝╚═╝  ╚═╝
+ ██████╗  ██████╗ ██████╗         ██╗██╗   ██╗██████╗  ██████╗ ███████╗
+ ██╔══██╗██╔════╝██╔════╝         ██║██║   ██║██╔══██╗██╔════╝ ██╔════╝
+ ██║  ██║██║     ██║              ██║██║   ██║██║  ██║██║  ███╗█████╗
+ ██║  ██║██║     ██║         ██   ██║██║   ██║██║  ██║██║   ██║██╔══╝
+ ██████╔╝╚██████╗╚██████╗    ╚█████╔╝╚██████╔╝██████╔╝╚██████╔╝███████╗
+ ╚═════╝  ╚═════╝ ╚═════╝     ╚════╝  ╚═════╝ ╚═════╝  ╚═════╝ ╚══════╝
 ```
 
 ---
@@ -19,14 +19,14 @@ score roller. The GM never invents dice results — every roll is real.
 ## Architecture
 
 ```
-game_master.py          ← main CLI (Ollama tool-calling loop)
+judge.py                ← main CLI (Ollama tool-calling loop)
     │
     │  MCP stdio transport (subprocess)
     ▼
 dice_server.py          ← FastMCP server with 3 dice tools
 ```
 
-`game_master.py` spawns `dice_server.py` as a child process and communicates
+`judge.py` spawns `dice_server.py` as a child process and communicates
 with it over stdin/stdout via the MCP protocol. The Ollama model receives the
 tool schemas and can call them freely during the conversation.
 
@@ -79,11 +79,11 @@ ollama pull llama3.2
 
 ```powershell
 # Default model (llama3.2)
-python game_master.py
+python judge.py
 
 # Specify a different model
-python game_master.py qwen2.5
-python game_master.py llama3.1
+python judge.py qwen2.5
+python judge.py llama3.1
 ```
 
 Type **`quit`** or **`exit`** (or press `Ctrl+C`) to end the session.
@@ -165,6 +165,6 @@ You: I explore the dark corridor ahead.
 
 - **`mcp` package is in preview** — pin the version to avoid breaking changes:
   `mcp>=1.5.0,<2.0.0` (already set in `requirements.txt`).
-- The game master persona is **GRIMDAR THE UNYIELDING** — feel free to edit
-  `SYSTEM_PROMPT` in `game_master.py` to change the tone or rules.
+- The judge persona is **GRIMDAR THE UNYIELDING** — feel free to edit
+  `SYSTEM_PROMPT` in `judge.py` to change the tone or rules.
 - Conversation history is kept in memory for the duration of the session only.
