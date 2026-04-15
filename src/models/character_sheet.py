@@ -34,18 +34,18 @@ class CharacterSheet:
         """Compute AC = 10 + Agility modifier + sum of armor modifiers.
 
         Armor bonus comes from:
-        - Items worn in slots that carry the 'armor' tag on the item itself.
-        - Conditions tagged 'armor' applied directly to the character.
+        - Conditions with target='ac' on items currently worn in slots.
+        - Conditions with target='ac' applied directly to the character.
         """
         agility_mod = ABILITY_MODIFIERS.get(self.abilities.get("Agility", 10), 0)
         armor_mod = sum(
-            eq.modifier
-            for eq in self.slots.values()
-            if eq is not None and "armor" in eq.tags
+            c.modifier
+            for eq in self.slots.values() if eq is not None
+            for c in eq.conditions if c.target == "ac"
         ) + sum(
             c.modifier
             for c in self.conditions
-            if "armor" in c.tags
+            if c.target == "ac"
         )
         return 10 + agility_mod + armor_mod
 

@@ -17,17 +17,16 @@ class Equipment:
         quantity:   How many of this item are carried. Default 1.
         weight:     Item weight in pounds. Default 0.0 (negligible).
         charges:    Number of uses/charges remaining. -1 means unlimited/N/A.
-        source:     Where the item came from (e.g., "starting equipment", "looted").
         conditions: Conditions this item grants while equipped/active.
         tags:       Category tags for the item (e.g., ["armor"], ["weapon"]) used for filtering or special interactions.
-        modifier:   Numeric bonus/penalty this item contributes (e.g., +2 AC for a shield).
+        damage:     Damage die expression for weapons (e.g., "1d6"). None for non-weapons.
     """
     name: str
     quantity: int = 1
     weight: float = 0.0
     charges: int = -1          # -1 = not applicable
-    source: str = "starting equipment"
-    modifier: int = 0
+    damage: str | None = None
+    cost_cp: int = 0
     conditions: list[Condition] = field(default_factory=list)
     tags: set[str] = field(default_factory=set)
 
@@ -40,8 +39,8 @@ class EquipmentSchema(Schema):
     quantity   = fields.Int(load_default=1)
     weight     = fields.Float(load_default=0.0)
     charges    = fields.Int(load_default=-1)
-    source     = fields.Str(load_default="starting equipment")
-    modifier   = fields.Int(load_default=0)
+    damage     = fields.Str(load_default=None, allow_none=True)
+    cost_cp    = fields.Int(load_default=0)
     conditions = fields.List(fields.Nested(lambda: ConditionSchema()), load_default=list)
 
     @post_load
