@@ -149,8 +149,8 @@ def update_ability_score(ability: str, score: int) -> str:
 @mcp.tool()
 def add_condition(
     name: str,
-    source: str = "",
     rounds: int = -1,
+    target: str = "",
     modifier: int = 0,
     tags: list[str] | None = None,
 ) -> str:
@@ -159,10 +159,10 @@ def add_condition(
 
     Parameters:
         name:        Label for the condition (e.g., "poisoned", "blinded").
-        source:      What caused the condition (e.g., "Giant Spider bite").
         rounds:      Duration in rounds. Use −1 for indefinite.
+        target:      What is affected (e.g., "ac", "attack rolls", "all rolls").
         modifier:    Numeric modifier while active (e.g., -2).
-        tags:        Category tags (e.g., ["armor"], ["poison", "curse"]).
+        tags:        Category tags (e.g., ["poison", "curse"]).
 
     Returns confirmation, or an error string.
     """
@@ -171,7 +171,7 @@ def add_condition(
         condition = Condition(
             name=name,
             rounds=rounds,
-            source=source,
+            target=target,
             modifier=modifier,
             tags=set(tags) if tags else set(),
         )
@@ -212,7 +212,6 @@ def add_equipment(
     quantity: int = 1,
     weight: float = 0.0,
     charges: int = -1,
-    source: str = "looted",
 ) -> str:
     """
     Add an item to the character's inventory.
@@ -222,7 +221,6 @@ def add_equipment(
         quantity: Number of this item to add. Default 1.
         weight:   Weight in pounds. Default 0.0.
         charges:  Uses/charges remaining; -1 means not applicable.
-        source:   Where the item came from (e.g., "looted", "purchased").
 
     Returns confirmation, or an error string.
     """
@@ -233,7 +231,6 @@ def add_equipment(
             quantity=quantity,
             weight=weight,
             charges=charges,
-            source=source,
         )
         sheet.equipment.append(item)
         _save_sheet(sheet)

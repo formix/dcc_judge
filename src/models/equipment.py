@@ -41,6 +41,7 @@ class EquipmentSchema(Schema):
     charges    = fields.Int(load_default=-1)
     damage     = fields.Str(load_default=None, allow_none=True)
     cost_cp    = fields.Int(load_default=0)
+    tags       = fields.List(fields.Str(), load_default=list)
     conditions = fields.List(fields.Nested(lambda: ConditionSchema()), load_default=list)
 
     @post_load

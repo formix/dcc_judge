@@ -15,8 +15,8 @@ class Condition:
         modifier:    Optional numeric modifier to apply while the condition is active (e.g., -2 to all rolls).
     """
     name: str
-    rounds: int          # -1 = indefinite
-    target: str
+    rounds: int = -1     # -1 = indefinite
+    target: str = ""     # e.g. "ac", "attack rolls", "all rolls"
     modifier: int = 0
     tags: set[str] = field(default_factory=set)
 
@@ -29,6 +29,7 @@ class ConditionSchema(Schema):
     rounds      = fields.Int(load_default=-1)
     target      = fields.Str(load_default="")
     modifier    = fields.Int(load_default=0)
+    tags        = fields.List(fields.Str(), load_default=list)
 
     @post_load
     def make(self, data, **kwargs) -> Condition:

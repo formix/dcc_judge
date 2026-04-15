@@ -23,7 +23,7 @@ _schema = CharacterSheetSchema()
 # Public API
 # ---------------------------------------------------------------------------
 
-def load_sheet(path: Path) -> CharacterSheet:
+def load_sheet(path: Path = Path("character.json")) -> CharacterSheet:
     """
     Load a CharacterSheet from a JSON file.
 
@@ -44,7 +44,7 @@ def load_sheet(path: Path) -> CharacterSheet:
     return cast(CharacterSheet, _schema.load(data))
 
 
-def save_sheet(sheet: CharacterSheet, path: Path) -> None:
+def save_sheet(sheet: CharacterSheet, path: Path = Path("character.json")) -> None:
     """
     Persist a CharacterSheet to a JSON file.
 
@@ -80,8 +80,6 @@ def format_sheet(sheet: CharacterSheet) -> str:
                 parts.append(f"{e.weight} lb")
             if e.charges != -1:
                 parts.append(f"{e.charges} charge(s)")
-            if e.source != "starting equipment":
-                parts.append(f"from: {e.source}")
             detail = "  (" + ", ".join(p for p in parts if p) + ")" if any(parts) else ""
             lines.append(f"  - {e.name}{detail}")
             for c in e.conditions:
@@ -92,7 +90,7 @@ def format_sheet(sheet: CharacterSheet) -> str:
         lines.append("Conditions:")
         for c in sheet.conditions:
             rounds_str = "indefinite" if c.rounds == -1 else f"{c.rounds} round(s)"
-            lines.append(f"  [{c.name}] {rounds_str} | source: {c.source}")
+            lines.append(f"  [{c.name}] {rounds_str}")
     lines.append("")
     lines.append("Slots:")
     for slot, e in sheet.slots.items():

@@ -130,8 +130,8 @@ def update_party_member_hp(name: str, delta: int) -> str:
 def add_party_member_condition(
     name: str,
     condition_name: str,
-    source: str = "",
     rounds: int = -1,
+    target: str = "",
     modifier: int = 0,
     tags: list[str] | None = None,
 ) -> str:
@@ -141,16 +141,16 @@ def add_party_member_condition(
     Parameters:
         name:           Character name (case-insensitive).
         condition_name: Label for the condition (e.g., "poisoned", "on fire").
-        source:         What caused it (e.g., "Giant Spider bite").
         rounds:         Duration in rounds; -1 means indefinite.
+        target:         What is affected (e.g., "ac", "attack rolls", "all rolls").
         modifier:       Numeric modifier while active (e.g., -2).
-        tags:           Category tags (e.g., ["armor"], ["poison", "curse"]).
+        tags:           Category tags (e.g., ["poison", "curse"]).
     """
     try:
         condition = Condition(
             name=condition_name,
             rounds=rounds,
-            source=source,
+            target=target,
             modifier=modifier,
             tags=set(tags) if tags else set(),
         )
