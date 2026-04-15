@@ -53,8 +53,8 @@ def _generate_character(name: str) -> CharacterSheet:
 
     # Starting equipment comes from the occupation table.
     equipment = [
-        Equipment(name=weapon,     source="starting equipment"),
-        Equipment(name=trade_good, source="starting equipment"),
+        Equipment(name=weapon),
+        Equipment(name=trade_good),
     ]
 
     return CharacterSheet(
