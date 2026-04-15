@@ -145,13 +145,13 @@ ARMORS: list[Equipment] = [
         name="Leather armor",
         cost_cp=2000,
         tags={"wearable", "body"},
-        conditions=[Condition(name="armor", rounds=-1, target="ac", modifier=3)],
+        conditions=[Condition(name="armor", rounds=-1, target="ac", modifier=2)],
     ),
     Equipment(
         name="Hide armor",
         cost_cp=1500,
         tags={"wearable", "body"},
-        conditions=[Condition(name="armor", rounds=-1, target="ac", modifier=2)],
+        conditions=[Condition(name="armor", rounds=-1, target="ac", modifier=4)],
     ),
     Equipment(
         name="Shield",
