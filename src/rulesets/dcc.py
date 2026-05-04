@@ -288,7 +288,7 @@ ARMORS: list[Equipment] = [
 # cost_cp is in copper pieces: 1 gp = 100 cp, 1 sp = 10 cp.
 TOOLS: list[Equipment] = [
     # ── Alchemical & religious ────────────────────────────────────────────────
-    Equipment(name="Flask of oil",            cost_cp=3),    # lamp oil, DCC p.73
+    Equipment(name="Flask of oil",            cost_cp=3,     note="Lamp oil (DCC p.73)"),
     Equipment(name="Holy symbol",             cost_cp=25),
     Equipment(name="Vial of holy water",      cost_cp=25),
     # ── Food & consumables ────────────────────────────────────────────────────
@@ -297,8 +297,8 @@ TOOLS: list[Equipment] = [
     Equipment(name="Stinky cheese",           cost_cp=3),
     Equipment(name="Fruit",                   cost_cp=2),
     Equipment(name="Cheese dip",              cost_cp=3),
-    Equipment(name="Herbs, 1 lb.",            cost_cp=10),
-    Equipment(name="Flour, 1 lb.",            cost_cp=2),
+    Equipment(name="Herbs",                   cost_cp=10,    note="Sold per lb."),
+    Equipment(name="Flour",                   cost_cp=2,     note="Sold per lb."),
     # ── Tools & instruments ───────────────────────────────────────────────────
     Equipment(name="Spyglass",                cost_cp=5000),
     Equipment(name="Steel tongs",             cost_cp=125),
@@ -306,7 +306,7 @@ TOOLS: list[Equipment] = [
     Equipment(name="Tarot deck",              cost_cp=250),
     Equipment(name="Dice",                    cost_cp=10),
     Equipment(name="Crutches",                cost_cp=15),
-    Equipment(name="Fine tools",              cost_cp=2000),  # locksmith's picks & picks
+    Equipment(name="Fine tools",              cost_cp=2000,  note="Locksmith's picks and tools"),
     Equipment(name="Ukulele",                 cost_cp=1000),
     Equipment(name="Bridle",                  cost_cp=50),
     Equipment(name="Lantern",                 cost_cp=100),
@@ -315,7 +315,7 @@ TOOLS: list[Equipment] = [
     Equipment(name="Steel vial",              cost_cp=150),
     # ── Books & writing ───────────────────────────────────────────────────────
     Equipment(name="Book",                    cost_cp=5000),
-    Equipment(name="Parchment, 10 sheets",    cost_cp=200),   # 20 cp/sheet
+    Equipment(name="Parchment sheet",         cost_cp=20,    note="Sold in bundles of 10"),
     Equipment(name="Parchment and quill pen", cost_cp=50),
     Equipment(name="Black grimoire",          cost_cp=10000),
     # ── Containers & storage ─────────────────────────────────────────────────
@@ -324,17 +324,17 @@ TOOLS: list[Equipment] = [
     Equipment(name="Sack",                    cost_cp=5),
     Equipment(name="Waterproof sack",         cost_cp=20),
     # ── Raw materials & trade goods ───────────────────────────────────────────
-    Equipment(name="Linen, 1 yard",           cost_cp=5),
-    Equipment(name="Rope, 100'",              cost_cp=50),   # DCC 50' = 25 cp
-    Equipment(name="Candles, 20",             cost_cp=20),   # 1 cp each
+    Equipment(name="Linen",                   cost_cp=5,     note="Sold per yard"),
+    Equipment(name="Rope",                    cost_cp=50,    note="Sold in 100' coils"),
+    Equipment(name="Candle",                  cost_cp=1,     note="Sold in bundles of 20"),
     Equipment(name="Glass beads",             cost_cp=200),
-    Equipment(name="Clay, 1 lb.",             cost_cp=2),
-    Equipment(name="Fabric, 3 yards",         cost_cp=15),
-    Equipment(name="Sailcloth, 2 yards",      cost_cp=15),
-    Equipment(name="Wood, 10 lbs.",           cost_cp=5),
+    Equipment(name="Clay",                    cost_cp=2,     note="Sold per lb."),
+    Equipment(name="Fabric",                  cost_cp=5,     note="Sold in bundles of 3 yards"),
+    Equipment(name="Sailcloth",               cost_cp=8,     note="Sold in bundles of 2 yards"),
+    Equipment(name="Wood",                    cost_cp=1,     note="Sold in bundles of 10 lbs."),
     Equipment(name="Bundle of wood",          cost_cp=5),
-    Equipment(name="Fine stone, 10 lbs.",     cost_cp=5),
-    Equipment(name="Mithril, 1 oz.",          cost_cp=2000), # rare metal ~20 gp/oz
+    Equipment(name="Fine stone",              cost_cp=1,     note="Sold in bundles of 10 lbs."),
+    Equipment(name="Mithril",                 cost_cp=2000,  note="Sold per oz. Rare metal (~20 gp/oz)"),
     # ── Pelts & curiosities ───────────────────────────────────────────────────
     Equipment(name="Deer pelt",               cost_cp=50),
     Equipment(name="Badger pelt",             cost_cp=20),
@@ -342,15 +342,15 @@ TOOLS: list[Equipment] = [
     Equipment(name="Rag doll",                cost_cp=15),
     Equipment(name="Hex doll",                cost_cp=50),
     Equipment(name="Begging bowl",            cost_cp=2),
-    Equipment(name="Gem worth 20 gp",         cost_cp=2000), # stated value
+    Equipment(name="Gem worth 20 gp",         cost_cp=2000,  note="Stated value"),
     # ── Wearables ─────────────────────────────────────────────────────────────
     Equipment(name="Quality cloak",           cost_cp=200,   tags={"wearable", "shoulders"}),
     Equipment(name="Locket",                  cost_cp=75,    tags={"wearable", "neck"}),
     Equipment(name="Silk clothes",            cost_cp=500,   tags={"wearable", "body"}),
     Equipment(name="Fine suit of clothes",    cost_cp=5000,  tags={"wearable", "body"}),
-    Equipment(name="Fine suits, 3 sets",      cost_cp=15000, tags={"wearable", "body"}),
-    Equipment(name="Gloves, 4 pairs",         cost_cp=40,    tags={"wearable", "hands"}),
-    Equipment(name="Gold ring worth 10 gp",   cost_cp=1000,  tags={"wearable", "ring"}),  # stated value
+    Equipment(name="Fine suit",               cost_cp=5000,  tags={"wearable", "body"},   note="Sold in bundles of 3"),
+    Equipment(name="Gloves",                  cost_cp=10,    tags={"wearable", "hands"},  note="Sold in bundles of 4 pairs"),
+    Equipment(name="Gold ring worth 10 gp",   cost_cp=1000,  tags={"wearable", "ring"},   note="Stated value"),
 ]
 
 
