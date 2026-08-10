@@ -8,7 +8,7 @@ State lives for the duration of the process; nothing is written to disk.
 import random
 import uuid
 
-from rulesets.dcc import CHARACTER_RACES, CHARACTER_OCCUPATIONS, CHARACTER_ABILITIES, ABILITY_MODIFIERS, ALIGNEMENTS, GENDERS
+from rulesets.dcc import CHARACTER_RACES, CHARACTER_OCCUPATIONS, CHARACTER_ABILITIES, get_ability_modifier, ALIGNEMENTS, GENDERS
 from services.character_service import CharacterSheet, Equipment, Condition
 from services.dice_service import roll_dice
 
@@ -48,7 +48,7 @@ def _generate_character(name: str) -> CharacterSheet:
     abilities = {a: roll_dice("3d6").total for a in CHARACTER_ABILITIES}
 
     # 0-level HP: 1d4 + Stamina modifier (minimum 1).
-    stamina_mod = ABILITY_MODIFIERS.get(abilities["Stamina"], 0)
+    stamina_mod = get_ability_modifier(abilities["Stamina"])
     hp = max(1, roll_dice("1d4").total + stamina_mod)
 
     # Starting equipment comes from the occupation table.

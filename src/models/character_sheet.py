@@ -4,7 +4,7 @@ from dataclasses import dataclass, field
 
 from marshmallow import Schema, fields, post_load, pre_load, EXCLUDE
 
-from rulesets.dcc import CHARACTER_ABILITIES, ABILITY_MODIFIERS, SLOTS
+from rulesets.dcc import CHARACTER_ABILITIES, get_ability_modifier, SLOTS
 from models.condition import Condition, ConditionSchema
 from models.equipment import Equipment, EquipmentSchema
 
@@ -37,7 +37,7 @@ class CharacterSheet:
         - Conditions with target='ac' on items currently worn in slots.
         - Conditions with target='ac' applied directly to the character.
         """
-        agility_mod = ABILITY_MODIFIERS.get(self.abilities.get("Agility", 10), 0)
+        agility_mod = get_ability_modifier(self.abilities.get("Agility", 10))
         armor_mod = sum(
             c.modifier
             for eq in self.slots.values() if eq is not None
