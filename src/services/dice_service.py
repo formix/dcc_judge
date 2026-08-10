@@ -74,6 +74,18 @@ def roll_dice(expression: str) -> DiceRollResult:
     Raises:
         ValueError: If the expression is invalid or out of allowed range.
     """
+    if expression.strip().lstrip("+-").isdigit():
+        fixed = int(expression.strip())
+        return DiceRollResult(
+            expression=expression,
+            sides=0,
+            count=0,
+            modifier=0,
+            rolls=[fixed],
+            subtotal=0,
+            total=fixed,
+        )
+
     count, sides, modifier = _parse_expression(expression)
 
     if not (1 <= count <= 100):
