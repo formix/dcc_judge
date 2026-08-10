@@ -277,7 +277,9 @@ CHARACTER_ABILITIES: list[str] = [
 ]
 
 ABILITY_MODIFIERS: dict[int, int] = {
-    3: -3,
+    1: -3,
+    2: -3,
+    3: -2,
     4: -2,
     5: -2,
     6: -1,
@@ -286,18 +288,32 @@ ABILITY_MODIFIERS: dict[int, int] = {
     9: 0,
     10: 0,
     11: 0,
-    12: 0,
+    12: +1,
     13: +1,
     14: +1,
-    15: +1,
+    15: +2,
     16: +2,
     17: +2,
     18: +3,
     19: +3,
-    20: +4,
+    20: +3,
     21: +4,
-    22: +5,
-    23: +6,
-    24: +7,
-    25: +8,
+    22: +4,
+    23: +4,
+    24: +5,
+    25: +5
 }
+
+def get_ability_modifier(score: int) -> int:
+    """
+    Return the ability modifier for a given ability score.
+
+    Args:
+        score (int): The ability score.
+
+    Returns:
+        int: The ability modifier.
+    """
+    if score == 0:
+        return -128
+    return (score // 3) - 3
