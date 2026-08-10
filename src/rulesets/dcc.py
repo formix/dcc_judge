@@ -549,6 +549,4 @@ def get_ability_modifier(score: int) -> int:
     Returns:
         int: The ability modifier.
     """
-    if score == 0:
-        return -128
-    return (score // 3) - 3
+    return -128 if score < 1 else (score // 3) - 3
