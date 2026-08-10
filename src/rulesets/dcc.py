@@ -511,33 +511,6 @@ CHARACTER_ABILITIES: list[str] = [
     "Luck",         # Unique to DCC — used for Luck burns and checks
 ]
 
-ABILITY_MODIFIERS: dict[int, int] = {
-    1: -3,
-    2: -3,
-    3: -2,
-    4: -2,
-    5: -2,
-    6: -1,
-    7: -1,
-    8: -1,
-    9: 0,
-    10: 0,
-    11: 0,
-    12: +1,
-    13: +1,
-    14: +1,
-    15: +2,
-    16: +2,
-    17: +2,
-    18: +3,
-    19: +3,
-    20: +3,
-    21: +4,
-    22: +4,
-    23: +4,
-    24: +5,
-    25: +5
-}
 
 def get_ability_modifier(score: int) -> int:
     """
