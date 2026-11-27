@@ -1,0 +1,31 @@
+id: starting_equipment
+kind: items
+source: "https://roll20.net/compendium/dcc/Rules:Equipment, Table 3-3"
+verified: false   # not yet compared with the rulebook
+die: 1d24
+# item must match a name in WEAPONS or GEAR in src/rulesets/dcc.py
+entries:
+  - {min: 1, max: 1, item: "Backpack", quantity: 1}
+  - {min: 2, max: 2, item: "Candle", quantity: 1}
+  - {min: 3, max: 3, item: "Chain", quantity: 1}
+  - {min: 4, max: 4, item: "Chalk", quantity: 1}
+  - {min: 5, max: 5, item: "Small chest", quantity: 1}
+  - {min: 6, max: 6, item: "Crowbar", quantity: 1}
+  - {min: 7, max: 7, item: "Flask, empty", quantity: 1}
+  - {min: 8, max: 8, item: "Flint & steel", quantity: 1}
+  - {min: 9, max: 9, item: "Grappling hook", quantity: 1}
+  - {min: 10, max: 10, item: "Hammer, small", quantity: 1}
+  - {min: 11, max: 11, item: "Holy symbol, silver", quantity: 1}
+  - {min: 12, max: 12, item: "Vial of holy water", quantity: 1}
+  - {min: 13, max: 13, item: "Iron spike", quantity: 1}
+  - {min: 14, max: 14, item: "Lantern", quantity: 1}
+  - {min: 15, max: 15, item: "Mirror, hand-sized", quantity: 1}
+  - {min: 16, max: 16, item: "Flask of oil", quantity: 1}
+  - {min: 17, max: 17, item: "Pole", quantity: 1}
+  - {min: 18, max: 18, item: "Rations", quantity: 1}
+  - {min: 19, max: 19, item: "Rope", quantity: 1}
+  - {min: 20, max: 20, item: "Sack, large", quantity: 1}
+  - {min: 21, max: 21, item: "Sack, small", quantity: 1}
+  - {min: 22, max: 22, item: "Thieves' tools", quantity: 1}
+  - {min: 23, max: 23, item: "Torch", quantity: 1}
+  - {min: 24, max: 24, item: "Waterskin", quantity: 1}

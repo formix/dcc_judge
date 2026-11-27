@@ -1,0 +1,12 @@
+id: crit_table_i
+kind: critical
+source: "https://roll20.net/compendium/dcc/Combat (effects summarised)"
+verified: false   # not yet compared with the rulebook
+entries:
+  - {max: 0, text: "A hard blow knocks the weapon away.", effects: [{op: extra_damage, dice: 1d6}, {op: disarm, who: target}]}
+  - {min: 1, max: 1, text: "A solid extra hit.", effects: [{op: extra_damage, dice: 1d3}]}
+  - {min: 2, max: 2, text: "A bruising strike.", effects: [{op: extra_damage, dice: 1d4}]}
+  - {min: 3, max: 3, text: "The target is thrown off its timing.", effects: [{op: extra_damage, dice: 1d3}, {op: initiative_last, who: target, rounds: 1}]}
+  - {min: 4, max: 4, text: "The blow hampers the target's movement.", effects: [{op: extra_damage, dice: 1d4}, {op: speed_penalty, who: target, feet: 10, until: healed}]}
+  - {min: 5, max: 5, text: "A heavy strike.", effects: [{op: extra_damage, dice: 1d6}]}
+  - {min: 6, text: "The weapon is knocked loose, leaving an opening.", effects: [{op: disarm, who: target}, {op: free_attack, who: actor, trigger: target_picks_up_weapon}]}

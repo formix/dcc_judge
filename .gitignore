@@ -33,3 +33,4 @@ build/
 Thumbs.db
 
 data/*
+!data/tables/

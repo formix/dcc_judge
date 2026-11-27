@@ -1,0 +1,23 @@
+id: fumble_table
+kind: fumble
+source: "https://roll20.net/compendium/dcc/Combat, Table 4-2 (effects summarised)"
+verified: false   # not yet compared with the rulebook
+# Every fumble also misses. "who: actor" is the character who fumbled.
+entries:
+  - {max: 0, text: "A clean miss.", effects: []}
+  - {min: 1, max: 1, text: "A harmless blunder.", effects: []}
+  - {min: 2, max: 2, text: "A stumble.", effects: [{op: save, who: actor, save: reflex, dc: 10, on_failure: [{op: condition, who: actor, name: prone, rounds: 1}]}]}
+  - {min: 3, max: 3, text: "Off balance.", effects: [{op: attack_modifier, who: actor, value: -2, attacks: 1}]}
+  - {min: 4, max: 4, text: "The weapon is damaged.", effects: [{op: disable_weapon, repair_minutes: 10}]}
+  - {min: 5, max: 5, text: "A fall.", effects: [{op: condition, who: actor, name: prone, until: action_to_stand}]}
+  - {min: 6, max: 6, text: "Tangled in gear.", effects: [{op: lose_actions, who: actor, rounds: 1}, {op: ac_modifier, who: actor, value: -1, repair_minutes: 10}]}
+  - {min: 7, max: 7, text: "The weapon slips away.", effects: [{op: disarm, who: actor}]}
+  - {min: 8, max: 8, text: "The weapon is ruined.", effects: [{op: destroy_weapon, mundane_only: true}]}
+  - {min: 9, max: 9, text: "An opening for the enemy.", effects: [{op: defence_opening, who: actor, enemy_bonus: 2, attacks: 1}]}
+  - {min: 10, max: 10, text: "The armour seizes.", effects: [{op: condition, who: actor, name: immobilised, rounds: 1d3, only_if: armoured}]}
+  - {min: 11, max: 11, text: "Badly off balance.", effects: [{op: attack_modifier, who: actor, value: -4, attacks: 1}]}
+  - {min: 12, max: 12, text: "The attack goes toward a friend.", effects: [{op: attack_ally, target: random_in_range}]}
+  - {min: 13, max: 13, text: "A painful fall.", effects: [{op: damage, who: actor, dice: 1d3}, {op: condition, who: actor, name: prone, until: action_to_stand}]}
+  - {min: 14, max: 14, text: "Fighting from the ground.", effects: [{op: condition, who: actor, name: prone, rounds: 1}]}
+  - {min: 15, max: 15, text: "A self-inflicted wound.", effects: [{op: weapon_damage, who: actor}]}
+  - {min: 16, text: "A wounding fall onto one's back.", effects: [{op: weapon_damage, who: actor, bonus: 1}, {op: condition, who: actor, name: prone, until: {check: Agility, dc: 16}}]}
