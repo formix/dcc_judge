@@ -60,6 +60,23 @@ def adventure_info(adventure: str) -> str:
 
 
 @mcp.tool()
+def reset_game(adventure: str) -> str:
+    """Delete the saved game of an adventure (file path or http(s) URL, or a
+    bundled id). The next new_game starts from scratch. Logs are kept."""
+    global _game
+    try:
+        adv = load_adventure(adventure)
+    except AdventureError as exc:
+        return _dump({"ok": False, "errors": [str(exc)]})
+    store = SaveStore()
+    existed = store.exists(adv.id)
+    store.delete(adv.id)
+    if _game is not None and _game.adventure.id == adv.id:
+        _game = None
+    return _dump({"ok": True, "id": adv.id, "deleted_save": existed})
+
+
+@mcp.tool()
 def new_game(adventure: str, seed: int | None = None) -> str:
     """Start a new game from an adventure file path or http(s) URL (or a bundled
     id). Overwrites that adventure's save. Returns the opening result and the

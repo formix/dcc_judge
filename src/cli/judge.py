@@ -15,7 +15,7 @@ Usage:
     python src/cli/judge.py adventures/elders_secret/adventure.yaml
     python src/cli/judge.py adventures/elders_secret/adventure.yaml --model gemma4-12b-128k:latest
     python src/cli/judge.py https://example.com/my_adventure.yaml --model llama3.1 --host http://server:11434
-    python src/cli/judge.py adventures/elders_secret/adventure.yaml --new --seed 7
+    python src/cli/judge.py adventures/elders_secret/adventure.yaml --reset --seed 7
 """
 
 from __future__ import annotations
@@ -213,7 +213,11 @@ async def run(args) -> None:
             console.print(f"[bold]{info['title']}[/bold] [dim]({info['source']})[/dim]")
             for warning in info.get("warnings", []):
                 console.print(f"[yellow]Adventure warning: {warning}[/yellow]")
-            if info["saved_game"] and not args.new:
+            if args.reset and info["saved_game"]:
+                await session.call("reset_game", adventure=source)
+                console.print("[dim]The saved game was deleted. Starting over.[/dim]")
+                info["saved_game"] = False
+            if info["saved_game"]:
                 result = await session.call("resume_game", adventure=source)
                 console.print("[dim]Resuming your saved game.[/dim]")
                 session.narrate({"summary": (await session.call("command", text="look"))["summary"],
@@ -256,7 +260,8 @@ def main() -> None:
     parser.add_argument("adventure", help="adventure file: a path or an http(s) URL")
     parser.add_argument("--model", help="Ollama model for the Judge (omit for plain commands only)")
     parser.add_argument("--host", help="Ollama host, e.g. http://localhost:11434 or a remote server")
-    parser.add_argument("--new", action="store_true", help="start a new game, replacing the save")
+    parser.add_argument("--reset", "--new", dest="reset", action="store_true",
+                        help="delete this adventure's saved game and start a new one")
     parser.add_argument("--seed", type=int, help="dice seed for a new game")
     asyncio.run(run(parser.parse_args()))
 

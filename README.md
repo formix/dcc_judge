@@ -59,7 +59,8 @@ The first argument is the adventure file, a path or an http(s) URL:
 python src/cli/judge.py adventures/elders_secret/adventure.yaml           # plain commands, no model
 python src/cli/judge.py adventures/elders_secret/adventure.yaml --model gemma4-12b-128k:latest
 python src/cli/judge.py https://example.com/adventure.yaml --model llama3.1 --host http://server:11434
-python src/cli/judge.py adventures/elders_secret/adventure.yaml --new --seed 7   # start over, fixed dice
+python src/cli/judge.py adventures/elders_secret/adventure.yaml --reset          # delete the save, start over
+python src/cli/judge.py adventures/elders_secret/adventure.yaml --reset --seed 7  # start over with fixed dice
 ```
 
 The game saves after every action and resumes where you left off. Type `help`
@@ -75,8 +76,8 @@ Run the server on its own and point any MCP client at it over stdio:
 python src/servers/engine_server.py
 ```
 
-`new_game`, `resume_game` and `adventure_info` take the adventure as a file
-path or an http(s) URL. Tools: `new_game`, `resume_game`, `get_context`, `command`, `act`,
+`new_game`, `resume_game`, `reset_game` and `adventure_info` take the adventure as a file
+path or an http(s) URL. Tools: `new_game`, `resume_game`, `reset_game`, `get_context`, `command`, `act`,
 `customize_character`, `character_sheet`, `list_adventures`,
 `encounter_level`, `judge_guide`. The `judge` prompt and `judge_guide` tool
 explain the turn loop and the proposal format.

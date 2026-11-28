@@ -37,5 +37,9 @@ def test_engine_server_over_stdio(tmp_path):
                 assert unknown["handled"] is False
                 acted = await call("act", proposal=json.dumps({"actions": [{"type": "look"}]}))
                 assert acted["ok"]
+                assert (await call("adventure_info", adventure=info["source"]))["saved_game"]
+                reset = await call("reset_game", adventure=info["source"])
+                assert reset["ok"] and reset["deleted_save"]
+                assert not (await call("adventure_info", adventure=info["source"]))["saved_game"]
                 assert "PROPOSAL FORMAT" in await call("judge_guide")
     asyncio.run(run())
