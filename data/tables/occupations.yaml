@@ -1,0 +1,87 @@
+# 0-level occupations by race: trained weapon and trade good.
+# Source: https://roll20.net/compendium/dcc/Rules:Character%20Creation
+occupations:
+  Human:
+    - {occupation: Alchemist, weapon: Staff, trade_good: Flask of oil}
+    - {occupation: Animal trainer, weapon: Club, trade_good: Pony}
+    - {occupation: Armorer, weapon: 'Hammer, small', trade_good: Iron helmet}
+    - {occupation: Astrologer, weapon: Dagger, trade_good: Spyglass}
+    - {occupation: Barber, weapon: Razor, trade_good: Scissors}
+    - {occupation: Beadle, weapon: Staff, trade_good: Holy symbol}
+    - {occupation: Beekeeper, weapon: Staff, trade_good: Jar of honey}
+    - {occupation: Blacksmith, weapon: 'Hammer, small', trade_good: Steel tongs}
+    - {occupation: Butcher, weapon: Cleaver, trade_good: Side of beef}
+    - {occupation: Caravan guard, weapon: Short sword, trade_good: 'Linen, 1 yard'}
+    - {occupation: Cheesemaker, weapon: Cudgel, trade_good: Stinky cheese}
+    - {occupation: Cobbler, weapon: Awl, trade_good: Shoehorn}
+    - {occupation: Confidence artist, weapon: Dagger, trade_good: Quality cloak}
+    - {occupation: Cooper, weapon: Crowbar, trade_good: Barrel}
+    - {occupation: Costermonger, weapon: Knife, trade_good: Fruit}
+    - {occupation: Cutpurse, weapon: Dagger, trade_good: Small chest}
+    - {occupation: Ditch digger, weapon: Shovel, trade_good: 'Fine dirt, 1 lb.'}
+    - {occupation: Dock worker, weapon: Pole, trade_good: 1 late RPG book}
+    - {occupation: Farmer, weapon: Pitchfork, trade_good: Hen}
+    - {occupation: Fortune-teller, weapon: Dagger, trade_good: Tarot deck}
+    - {occupation: Gambler, weapon: Club, trade_good: Dice}
+    - {occupation: Gongfarmer, weapon: Trowel, trade_good: Sack of night soil}
+    - {occupation: Grave digger, weapon: Shovel, trade_good: Trowel}
+    - {occupation: Guild beggar, weapon: Sling, trade_good: Crutches}
+    - {occupation: Healer, weapon: Club, trade_good: Vial of holy water}
+    - {occupation: Herbalist, weapon: Club, trade_good: 'Herbs, 1 lb.'}
+    - {occupation: Herder, weapon: Staff, trade_good: Herding dog}
+    - {occupation: Hunter, weapon: Shortbow, trade_good: Deer pelt}
+    - {occupation: Indentured servant, weapon: Staff, trade_good: Locket}
+    - {occupation: Jester, weapon: Dart, trade_good: Silk clothes}
+    - {occupation: Jeweler, weapon: Dagger, trade_good: Gem worth 20 gp}
+    - {occupation: Locksmith, weapon: Dagger, trade_good: Fine tools}
+    - {occupation: Mendicant, weapon: Club, trade_good: Cheese dip}
+    - {occupation: Mercenary, weapon: Longsword, trade_good: Hide armor}
+    - {occupation: Merchant, weapon: Dagger, trade_good: '4 gp, 14 sp, 27 cp'}
+    - {occupation: Miller/baker, weapon: Club, trade_good: 'Flour, 1 lb.'}
+    - {occupation: Minstrel, weapon: Dagger, trade_good: Ukulele}
+    - {occupation: Noble, weapon: Longsword, trade_good: Gold ring worth 10 gp}
+    - {occupation: Orphan, weapon: Club, trade_good: Rag doll}
+    - {occupation: Ostler, weapon: Staff, trade_good: Bridle}
+    - {occupation: Outlaw, weapon: Short sword, trade_good: Leather armor}
+    - {occupation: Rope maker, weapon: Knife, trade_good: 'Rope, 100'''}
+    - {occupation: Scribe, weapon: Dart, trade_good: 'Parchment, 10 sheets'}
+    - {occupation: Shaman, weapon: Mace, trade_good: 'Herbs, 1 lb.'}
+    - {occupation: Slave, weapon: Club, trade_good: Strange-looking rock}
+    - {occupation: Smuggler, weapon: Sling, trade_good: Waterproof sack}
+    - {occupation: Soldier, weapon: Spear, trade_good: Shield}
+    - {occupation: Squire, weapon: Longsword, trade_good: Steel helmet}
+    - {occupation: Tax collector, weapon: Longsword, trade_good: 100 cp}
+    - {occupation: Trapper, weapon: Sling, trade_good: Badger pelt}
+    - {occupation: Urchin, weapon: Stick, trade_good: Begging bowl}
+    - {occupation: Wainwright, weapon: Club, trade_good: Pushcart}
+    - {occupation: Weaver, weapon: Dagger, trade_good: Fine suit of clothes}
+    - {occupation: Wizard's apprentice, weapon: Dagger, trade_good: Black grimoire}
+    - {occupation: Woodcutter, weapon: Handaxe, trade_good: Bundle of wood}
+  Elf:
+    - {occupation: artisan, weapon: Staff, trade_good: 'Clay, 1 lb.'}
+    - {occupation: barrister, weapon: Quill, trade_good: Book}
+    - {occupation: chandler, weapon: Scissors, trade_good: 'Candles, 20'}
+    - {occupation: falconer, weapon: Dagger, trade_good: Falcon}
+    - {occupation: forester, weapon: Staff, trade_good: 'Herbs, 1 lb.'}
+    - {occupation: glassblower, weapon: 'Hammer, small', trade_good: Glass beads}
+    - {occupation: navigator, weapon: Shortbow, trade_good: Spyglass}
+    - {occupation: sage, weapon: Dagger, trade_good: Parchment and quill pen}
+  Halfling:
+    - {occupation: chicken butcher, weapon: Handaxe, trade_good: 'Chicken meat, 5 lbs.'}
+    - {occupation: dyer, weapon: Staff, trade_good: 'Fabric, 3 yards'}
+    - {occupation: glovemaker, weapon: Awl, trade_good: 'Gloves, 4 pairs'}
+    - {occupation: wanderer, weapon: Sling, trade_good: Hex doll}
+    - {occupation: haberdasher, weapon: Scissors, trade_good: 'Fine suits, 3 sets'}
+    - {occupation: mariner, weapon: Knife, trade_good: 'Sailcloth, 2 yards'}
+    - {occupation: moneylender, weapon: Short sword, trade_good: '5 gp, 10 sp, 200 cp'}
+    - {occupation: trader, weapon: Short sword, trade_good: 20 sp}
+    - {occupation: vagrant, weapon: Club, trade_good: Begging bowl}
+  Dwarf:
+    - {occupation: apothecarist, weapon: Cudgel, trade_good: Steel vial}
+    - {occupation: blacksmith, weapon: 'Hammer, small', trade_good: 'Mithril, 1 oz.'}
+    - {occupation: chest-maker, weapon: Chisel, trade_good: 'Wood, 10 lbs.'}
+    - {occupation: herder, weapon: Staff, trade_good: Sow}
+    - {occupation: miner, weapon: Pick, trade_good: Lantern}
+    - {occupation: mushroom-farmer, weapon: Shovel, trade_good: Sack}
+    - {occupation: rat-catcher, weapon: Club, trade_good: Net}
+    - {occupation: stonemason, weapon: 'Hammer, small', trade_good: 'Fine stone, 10 lbs.'}

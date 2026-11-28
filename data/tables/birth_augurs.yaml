@@ -1,0 +1,35 @@
+# DCC Table 1-2: birth augur and lucky roll. Roll d30 + Luck modifier at creation.
+# applies_to names what the lucky roll modifier (the Luck modifier at creation) affects.
+# Source: https://roll20.net/compendium/dcc/Rules:Character%20Creation
+die: d30
+entries:
+  - {roll: 1, name: Harsh winter, applies_to: attack}
+  - {roll: 2, name: The bull, applies_to: melee_attack}
+  - {roll: 3, name: Fortunate date, applies_to: missile_attack}
+  - {roll: 4, name: Raised by wolves, applies_to: unarmed_attack}
+  - {roll: 5, name: Conceived on horseback, applies_to: mounted_attack}
+  - {roll: 6, name: Born on the battlefield, applies_to: damage}
+  - {roll: 7, name: Path of the bear, applies_to: melee_damage}
+  - {roll: 8, name: Hawkeye, applies_to: missile_damage}
+  - {roll: 9, name: Pack hunter, applies_to: starting_weapon}
+  - {roll: 10, name: Born under the loom, applies_to: skill_checks}
+  - {roll: 11, name: Fox's cunning, applies_to: find_traps}
+  - {roll: 12, name: Four-leafed clover, applies_to: find_secret_doors}
+  - {roll: 13, name: Seventh son, applies_to: spell_checks}
+  - {roll: 14, name: The raging storm, applies_to: spell_damage}
+  - {roll: 15, name: Righteous heart, applies_to: turn_unholy}
+  - {roll: 16, name: Survived the plague, applies_to: magical_healing}
+  - {roll: 17, name: Lucky sign, applies_to: saves}
+  - {roll: 18, name: Guardian angel, applies_to: trap_saves}
+  - {roll: 19, name: Survived a spider bite, applies_to: poison_saves}
+  - {roll: 20, name: Struck by lightning, applies_to: reflex}
+  - {roll: 21, name: Lived through famine, applies_to: fortitude}
+  - {roll: 22, name: Resisted temptation, applies_to: will}
+  - {roll: 23, name: Charmed house, applies_to: ac}
+  - {roll: 24, name: Speed of the cobra, applies_to: initiative}
+  - {roll: 25, name: Bountiful harvest, applies_to: hp}
+  - {roll: 26, name: Warrior's arm, applies_to: crits}
+  - {roll: 27, name: Unholy house, applies_to: corruption}
+  - {roll: 28, name: The Broken Star, applies_to: fumbles}
+  - {roll: 29, name: Birdsong, applies_to: languages}
+  - {roll: 30, name: Wild child, applies_to: speed}

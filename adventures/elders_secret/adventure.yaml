@@ -1,0 +1,597 @@
+# The Elder's Secret: game data for milestone 1 (the dungeon).
+# Story and design: docs/adventure-E01.md. This file implements the parts the
+# engine supports so far; see "not yet implemented" in docs/engine-notes.md.
+# The dungeon entrance stands in for the village until milestone 2.
+
+id: elders_secret
+title: The Elder's Secret
+start: outside
+home: outside
+clock_start: 180          # the 3-hour walk from Emberwick
+deadline: 1440            # 24 hours from setting out
+deadline_text: >-
+  Far away in Emberwick, the bells toll for the priest. Whatever you carry now,
+  it comes too late.
+
+# Milestone 1 stand-in for section 10 of the adventure: bring both documents
+# out. The witness, Maud, is not implemented yet.
+goal:
+  items: [receipt_satchel, pact_tablet]
+  need: 2
+  text: >-
+    You stagger into the daylight with the elder's own words and the tablet of
+    his bargain. What you do with them is another matter.
+
+encounters:
+  level: 1
+  table:
+    - id: cinder_rats
+      weight: 3
+      limit: 2
+      group: cinder_rats
+      text:
+        light: Three soot-grey rats as big as cats nose out of a crack, sniffing at your packs.
+        infravision: Three small warm shapes slip out of a crack and come sniffing.
+        touch: Claws skitter on stone, close, and something sniffs at your pack.
+    - id: runt
+      weight: 1
+      limit: 1
+      text:
+        light: A starving goblin runt crouches over an old boot, gnawing. It freezes, then holds out a hand. "Food?" It would trade anything it knows.
+        infravision: A small, thin warm shape crouches, gnawing. It whispers, "Food?"
+        touch: Something small breathes fast nearby and whispers, "Food?"
+    - id: count_takers
+      weight: 2
+      limit: 1
+      group: count_takers
+      text:
+        light: Two goblins with a weighted net come round the corner, counting on their fingers. They see you.
+        infravision: Two warm shapes with a net between them stop dead, then rush you.
+        touch: Two voices count in a guttural tongue, stop, and come at you.
+    - id: hammers_stop
+      weight: 1
+      text: {light: The distant hammering stops. Silence spreads through the halls., infravision: The distant hammering stops. Silence spreads., touch: The distant hammering stops. Silence spreads.}
+    - id: footsteps
+      weight: 1
+      limit: 1
+      text: {light: "Slow, heavy footsteps pass somewhere behind the stones, then fade.", infravision: "Slow, heavy footsteps pass behind the stones, then fade.", touch: "Slow, heavy footsteps pass behind the stones, then fade."}
+    - id: voice
+      weight: 1
+      text: {light: "A familiar voice calls one of you by name from the dark. It waits for an answer.", infravision: "A familiar voice calls one of you by name from the dark. It waits for an answer.", touch: "A familiar voice calls one of you by name from the dark. It waits for an answer."}
+    - id: gleaner
+      weight: 1
+      text: {light: "Something heavy drags itself through the dark nearby, wet and slow. Then it is gone.", infravision: "A huge cold shape drags itself past at the edge of sight.", touch: "Something heavy drags itself past, wet and slow. Hold your breath."}
+
+creatures:
+  sentry:
+    name: goblin sentry
+    hp: 3
+    ac: 10
+    attack: 0
+    damage: 1d3
+    morale: 6
+    morale_fail: flee
+    kinds: [goblin, tallyman_servant]
+  cinder_rat:
+    name: cinder rat
+    hp: 1
+    ac: 10
+    attack: 0
+    damage: "1"
+    morale: 5
+    morale_fail: flee
+    kinds: [vermin]
+  count_taker:
+    name: count-taker
+    hp: 4
+    ac: 11
+    attack: 1
+    damage: 1d4
+    morale: 7
+    morale_fail: flee
+    kinds: [goblin, tallyman_servant]
+  goblin_smith:
+    name: goblin smith
+    hp: 5
+    ac: 11
+    attack: 1
+    damage: 1d4
+    morale: 7
+    morale_fail: flee
+    kinds: [goblin, tallyman_servant]
+  skarn:
+    name: Skarn
+    hp: 22
+    ac: 14
+    attack: 3
+    damage: 1d8+2
+    morale: 9
+    morale_fail: surrender
+    kinds: [goblin, tallyman_servant]
+    loot:
+      - id: skarn_key
+        name: {light: long iron key, infravision: long key, touch: long key}
+        description: {light: A long iron key, warm from Skarn's belt., infravision: A long key., touch: A long key with heavy wards.}
+        material: iron
+        portable: true
+  husk:
+    name: Corin
+    hp: 10
+    ac: 10
+    attack: 1
+    damage: 1d4
+    morale: null
+    kinds: [husk]
+    sees_in_dark: true
+
+groups:
+  gate_sentries:
+    name: the sentries
+    attitude: unaware
+    members:
+      - {creature: sentry, name: Nib}
+      - {creature: sentry, name: Rustle}
+    description:
+      light: Two goblins squat by the fire, sharing a pan and arguing.
+      infravision: Two small warm shapes squat by a heat, arguing.
+      touch: Two voices argue in a guttural tongue, close by.
+  cinder_rats:
+    name: cinder rats
+    attitude: hostile
+    members:
+      - {creature: cinder_rat, count: 3}
+  count_takers:
+    name: count-takers
+    attitude: hostile
+    members:
+      - {creature: count_taker, count: 2}
+  forge_crew:
+    name: Skarn's forge crew
+    attitude: neutral
+    members:
+      - {creature: skarn, chief: true}
+      - {creature: goblin_smith, count: 3}
+    description:
+      light: Three goblins strike at anvils, three blows and a rest; at each rest they look up and count. A huge goblin hauls a bellows chain with his back to a high desk.
+      infravision: Three small warm figures at anvils, and one huge one hauling a chain.
+      touch: Hammers ring three times, then stop for a breath. A deep voice counts.
+  corin:
+    name: Corin
+    attitude: neutral
+    members:
+      - {creature: husk, name: Corin}
+    description:
+      light: A grey, shrunken man shuffles along the far ledge, patting his empty pockets. A tag hangs at his neck.
+      infravision: A thin, barely warm figure shuffles and pats itself.
+      touch: Dragging feet. A dry voice asks, "Is it paid? Is it paid?"
+
+scenes:
+  - id: outside
+    name: Outside the Broken Gate
+    entrance: true
+    lit: true
+    safe: true
+    encounters: none
+    # Milestone 1 stand-in for Hester Gage's shop in Emberwick.
+    shop:
+      stock: [Torch, "Flint & steel", Flask of oil, Lantern, Candle, Rope, Iron spike, Chalk, Rations,
+              Waterskin, "Sack, small", "Sack, large", Waterproof sack, Backpack, Crowbar, Pole, Dagger,
+              Club, Staff, Spear, Sling, Sling stone, Shield, Padded, Leather armor]
+      custom:
+        - id: wound_dressing
+          name: {light: wound dressing, infravision: wound dressing, touch: wound dressing}
+          description: {light: A clean linen wound dressing., infravision: A rolled cloth., touch: A rolled cloth bandage.}
+          material: cloth
+          portable: true
+          cost_cp: 30
+          rules: {dressing: true, stack: 3}
+      limited: {wound dressing: 3}
+    description:
+      light: Bare hills under a white sky. A goat path climbs to a gatehouse that has fallen in on itself. Smoke rises thinly from somewhere inside.
+      infravision: Bare hills under a white sky. A goat path climbs to a fallen gatehouse.
+      touch: Wind, dry grass and the smell of smoke.
+
+  - id: gate
+    name: Broken Gate
+    description:
+      light: A gatehouse has fallen in on itself. Between leaning blocks, a cookfire throws orange light on a heap of old boots, none of them a matching pair.
+      infravision: Tumbled blocks lean around a gap. A fire's heat shimmers. Beside it is a high heap of boot-shaped things.
+      touch: Broken stone underfoot. Smoke, frying fat and old leather. Water drips somewhere below.
+    groups:
+      - {group: gate_sentries}
+    objects:
+      - id: gate_lintel
+        name: {light: lintel, infravision: lintel, touch: carved stone}
+        material: stone
+        rules: {unbreakable: true}
+        description:
+          light: Deep letters read ANSWER NOTHING THAT CALLS YOU BY NAME. Below them, three chalk strokes and a bar.
+          infravision: Deep-cut letters read ANSWER NOTHING THAT CALLS YOU BY NAME.
+          touch: Deep-cut letters, readable by finger, spell ANSWER NOTHING THAT CALLS YOU BY NAME.
+      - id: boot_heap
+        name: {light: heap of boots, infravision: heap of boots, touch: heap of boots}
+        material: leather
+        description:
+          light: Dozens of boots, worn through or nearly new.
+          infravision: A heap of boots.
+          touch: Boots, many sizes.
+        rules:
+          search_text: {light: "Too many boots, from too many people. One small pair is a child's.", infravision: "Too many boots. One small pair is a child's.", touch: "Too many boots. One small pair is a child's."}
+      - id: gate_fire
+        name: {light: cookfire, infravision: fire, touch: fire}
+        material: wood
+        rules: {light: {permanent: true}}
+        state: {lit: true}
+        description:
+          light: A small fire with a pan on it.
+          infravision: Flickering heat and a pan.
+          touch: Heat and spitting fat.
+      - id: oil_crock
+        name: {light: crock of oil, infravision: lidded pot, touch: greasy pot}
+        material: clay
+        portable: true
+        rules: {oil: true}
+        description:
+          light: A crock of lamp oil sits by the fire.
+          infravision: A squat lidded pot.
+          touch: A greasy pot that smells of lamp oil.
+      - id: squeak_door
+        name: {light: plank door, infravision: door, touch: plank door}
+        material: wood
+        rules:
+          noisy: {unless: oiled}
+        description:
+          light: A plank door sags on two rusted hinges.
+          infravision: A sagging door on two hinges.
+          touch: Planks and flaking hinges.
+        interactions:
+          - id: oil_hinges
+            verbs: [oil, grease]
+            requires_rule: oil
+            consumes: true
+            minutes: 0
+            missing_text: You have nothing to grease the hinges with.
+            text: {light: The hinges drink the oil., infravision: The hinges drink the oil., touch: The hinges drink the oil.}
+            effects:
+              - {op: set_state, target: self, key: oiled, value: true}
+              - {op: set_description, target: self, description: {light: "A plank door on two hinges, slick with fresh oil.", infravision: "A door on two greased hinges.", touch: "Planks; hinges slick with oil."}}
+
+  - id: cells
+    name: Debtors' Cells
+    description:
+      light: A long, low gallery. Three barred cells face an iron frame bolted to the wall. Thousands of short strokes are scratched into every surface, in groups of three and a bar. Someone in the second cell is humming a cradle song.
+      infravision: A long gallery with barred openings facing an iron frame. Lines of short cuts cover the walls. A figure sits in one opening.
+      touch: Cold walls ridged with scratches. Iron bars. The smell of unwashed people. Someone hums a cradle song; someone else coughs.
+    objects:
+      - id: tally_rack
+        name: {light: tally rack, infravision: iron frame, touch: iron frame}
+        material: iron
+        rules: {unbreakable: true}
+        notes: The tally-rack puzzle and the prisoners (Maud, Tobin, Garr) are not implemented yet.
+        description:
+          light: An iron frame holds a long rail of six pegs on a counterweight. Three pegs hold tags reading MAUD FERRIN, TOBIN REED and GARR PELL, OWES BLOOD. Rods run from it to the cell bolts.
+          infravision: A frame with a rail of six pegs, three holding tags, and rods running to the cells.
+          touch: A swaying rail with six pegs; three tags with stamped letters; rods running away.
+      - id: cell_bars
+        name: {light: cells, infravision: barred openings, touch: iron bars}
+        material: iron
+        description:
+          light: Iron bars, bolts sunk into stone sockets. Three prisoners watch you.
+          infravision: Bars and bolts; figures behind them.
+          touch: Bars; bolts set in stone; someone breathing on the other side.
+      - id: wall_words
+        name: {light: carved words, infravision: carved words, touch: carved words}
+        material: stone
+        rules: {unbreakable: true}
+        description:
+          light: "Cut larger than the tallies: THE RAIL CANNOT TELL THE QUICK FROM THE DEAD. Below, in another hand: NEVER GIVE IT BREATH."
+          infravision: "Large cut letters: THE RAIL CANNOT TELL THE QUICK FROM THE DEAD. NEVER GIVE IT BREATH."
+          touch: "Letters readable by finger: THE RAIL CANNOT TELL THE QUICK FROM THE DEAD. NEVER GIVE IT BREATH."
+      - id: bone_niche
+        name: {light: niche, infravision: niche, touch: niche}
+        material: stone
+        description:
+          light: A niche holds knuckle bones, twists of hair and scraps.
+          infravision: A cluttered niche.
+          touch: Small bones, hair, cloth.
+      - id: alda_tag
+        name: {light: "iron tag (ALDA BROOK)", infravision: iron tag, touch: stamped iron tag}
+        material: iron
+        portable: true
+        hidden: {find: bone_niche, dc: null, area_dc: 10}
+        description: {light: "An iron tag stamped ALDA BROOK, set aside for melting.", infravision: "An iron tag with stamped letters.", touch: "An iron tag; the letters read ALDA BROOK."}
+      - id: wat_tag
+        name: {light: "iron tag (WAT HILLMAN)", infravision: iron tag, touch: stamped iron tag}
+        material: iron
+        portable: true
+        hidden: {find: bone_niche, dc: null, area_dc: 10}
+        description: {light: "An iron tag stamped WAT HILLMAN, set aside for melting.", infravision: "An iron tag with stamped letters.", touch: "An iron tag; the letters read WAT HILLMAN."}
+      - id: tag_bench
+        name: {light: smith's bench, infravision: bench, touch: bench}
+        material: wood
+        description:
+          light: A bench with a bucket of blank iron tags and a scratch awl.
+          infravision: A bench, a bucket and a pointed tool.
+          touch: A bucket of smooth iron slips; a sharp awl.
+      - id: jailer_chair
+        name: {light: jailer's chair, infravision: heavy chair, touch: heavy chair}
+        material: wood
+        rules: {size: small}
+        description:
+          light: A heavy chair with one short leg, propped on a stone.
+          infravision: A heavy chair.
+          touch: A heavy, wobbling chair.
+      - id: east_wall
+        name: {light: east wall, infravision: east wall, touch: east wall}
+        material: stone
+        rules: {unbreakable: true}
+        description:
+          light: Fitted stones. A flame held near them leans and flutters.
+          infravision: Fitted stones.
+          touch: Cold air seeps between the stones.
+
+  - id: slag
+    name: Slag Pit
+    description:
+      light: A cavern floor of grey crust, cracked and glowing dully underneath. A stone causeway crosses it. Iron channels hang overhead, and the walls are streaked where water has run. At the far side, under a square hole in the roof, lies a deep black pool.
+      infravision: A causeway over a broken crust that gives off waves of heat. Channels overhead. A pool beneath a square opening in the roof.
+      touch: Fierce heat on both sides of a narrow stone walk. A cold drip from above. Somewhere ahead, water smacks against stone.
+    groups:
+      - {group: corin}
+    traps:
+      - id: quench_plate
+        name: a loose slab that every footprint avoids
+        trigger: {move: [gate_slag, slag_forge]}
+        hidden: {find: prints, dc: null, area_dc: 10, kind: trap}
+        text:
+          light: A slab tips underfoot. Overhead, a sluice bangs open and quench water hits the slag. Steam explodes across the causeway!
+          infravision: A slab tips. Water roars down onto the heat and the world vanishes in scalding steam!
+          touch: A slab tips. Water roars down and scalding steam explodes around you!
+        avoided_text: {light: You stride over the slab the goblins avoid., infravision: You stride over the slab the goblins avoid., touch: You feel for the worn stones and step over the loose slab.}
+        effects:
+          - {op: douse}
+          - {op: damage, who: each, dice: 1d4, check: {ability: Agility, dc: 10}, text: scalding steam}
+    objects:
+      - id: prints
+        name: {light: footprints, infravision: footprints, touch: worn stones}
+        material: stone
+        rules: {unbreakable: true}
+        description:
+          light: Goblin footprints cross the grime of the causeway.
+          infravision: Footprints across the causeway.
+          touch: Grime worn smooth along the causeway.
+      - id: slag_crust
+        name: {light: slag crust, infravision: hot crust, touch: hot crust}
+        material: stone
+        rules: {unbreakable: true}
+        description:
+          light: Crust over slow, glowing slag. It is not floor.
+          infravision: A cracked, shifting, hot surface.
+          touch: Heat; crust crackling at the edges.
+      - id: sluice
+        name: {light: sluice gate, infravision: gate in the channel, touch: rod}
+        material: iron
+        description:
+          light: A gate in the overhead channel, tied by a rod down to the causeway.
+          infravision: A gate in a channel with a rod to the floor.
+          touch: Cold drips; a rod running down into the stone.
+      - id: ysolde_body
+        name: {light: dead sellsword, infravision: seated body, touch: dry body}
+        material: bone
+        description:
+          light: A dried-out woman sits against a pillar among a dozen burnt-out torch stubs. A scabbard at her side reads YSOLDE MARR.
+          infravision: A seated body among short sticks; letters tooled on a scabbard.
+          touch: A dry body, burnt stubs all around, tooled letters on a scabbard.
+        rules:
+          search_text: {light: "A note in her satchel, in a shaking hand: \"It eats the light. Don't.\"", infravision: "A scrap of writing in her satchel, too faint to read.", touch: "Brittle paper in a satchel."}
+      - id: wickdrinker
+        name: {light: narrow black sword, infravision: narrow sword, touch: narrow sword}
+        material: iron
+        portable: true
+        notes: Wickdrinker. Its hunger (each hit drains torch time or blood) is not implemented yet.
+        rules:
+          weapon: {damage: 1d12, attack: 2, melee: true}
+          bane: {against: [tallyman_servant], damage: 1d6}
+          unbreakable: true
+          magic: true
+        description:
+          light: A narrow black sword stands in the dead woman's lap, its hilt wrapped in wax-stiffened cord. The torch flame leans toward it.
+          infravision: A narrow sword in the body's lap.
+          touch: A cold hilt wrapped in waxed cord.
+      - id: wound_dressing_ysolde
+        catalog: Linen
+        name: {light: wound dressing, infravision: rolled cloth, touch: rolled cloth}
+        description: {light: A clean wound dressing., infravision: A rolled cloth., touch: A rolled cloth bandage.}
+        portable: true
+        hidden: {find: ysolde_body, dc: null, area_dc: 10}
+        rules: {dressing: true}
+
+  - id: forge
+    name: Great Forge
+    front_rank: 3
+    encounters: none
+    description:
+      light: Heat and noise. A roaring forge fills the room, and beyond a high desk stands an iron-banded door.
+      infravision: A great heat fills the room. Beyond a tall desk, a banded door.
+      touch: Crushing heat. A heavy chain rattles.
+    groups:
+      - {group: forge_crew}
+    objects:
+      - id: forge_fire
+        name: {light: forge, infravision: great heat, touch: great heat}
+        material: stone
+        rules: {light: {permanent: true}, unbreakable: true}
+        state: {lit: true}
+        description:
+          light: The forge roars, white at its heart.
+          infravision: A blinding heat.
+          touch: Heat that hurts the skin.
+      - id: anvils
+        name: {light: anvils, infravision: anvils, touch: ringing anvils}
+        material: iron
+        rules:
+          unbreakable: true
+          sound_cover: {when: {flag: forge_alerted, equals: null}}
+        description:
+          light: Three anvils ring under the hammers, three blows and a rest.
+          infravision: Three anvils; the hammers rise and fall.
+          touch: Hammers ring three times, then stop for a breath.
+      - id: receipt_satchel
+        name: {light: fat satchel, infravision: bulging satchel, touch: stuffed satchel}
+        material: leather
+        portable: true
+        rules: {guarded_by: forge_crew}
+        description:
+          light: A fat satchel hangs from a nail on the desk post. Two wax seals show on papers poking out, a stroke-and-bar and a chapel cross.
+          infravision: A bulging satchel with two raised seals.
+          touch: A stuffed satchel; two wax seals, one cross-shaped.
+      - id: quench_trough
+        name: {light: quench trough, infravision: long trough, touch: wet trough}
+        material: wood
+        description:
+          light: A long trough of water beside the forge.
+          infravision: A long, full trough.
+          touch: Wet wood; water.
+      - id: crucible
+        name: {light: crucible, infravision: hot pot on a chain, touch: hot chain}
+        material: iron
+        rules: {unbreakable: true}
+        description:
+          light: A pot of molten metal hangs on a tipping chain.
+          infravision: A hot pot hung on a chain.
+          touch: Savage heat; a creaking chain.
+      - id: nail_bins
+        name: {light: nail bins, infravision: bins, touch: bins}
+        material: wood
+        description:
+          light: Bins of crude nails, some still showing pieces of stamped letters.
+          infravision: Bins of nails.
+          touch: Nails, a few with stamped ridges.
+      - id: coin_jar
+        name: {light: coin jar, infravision: jar of discs, touch: jar of coins}
+        material: clay
+        portable: true
+        rules: {guarded_by: forge_crew}
+        description:
+          light: A jar on the desk holding about 60 copper pieces.
+          infravision: A jar of small discs.
+          touch: Loose coins in a jar.
+      - id: pact_door
+        name: {light: iron-banded door, infravision: banded door, touch: banded door}
+        material: wood
+        rules:
+          locked: {key: skarn_key, pick_dc: 15, force_dc: 15}
+        state: {locked: true}
+        description:
+          light: Oak and iron, locked.
+          infravision: A banded door.
+          touch: Oak, iron bands, a keyhole.
+
+  - id: pact
+    name: Pact Chamber
+    closed: true
+    encounters: none
+    description:
+      light: A small round room, warm and clean. In the middle stands a plain wooden cradle. In it, in an iron lamp, burns a single steady flame no taller than a thumb. The curved wall is covered in names.
+      infravision: A small round room. A cradle holds a lamp whose small heat swells and sinks. Rows of cut writing cover the wall.
+      touch: Warm, still air smelling of lamp wax. A cradle with a lamp, too hot to hold. Rows of carved letters on a curved wall.
+    objects:
+      - id: child_flame
+        name: {light: small steady flame, infravision: small breathing heat, touch: breathing warmth}
+        material: iron
+        rules: {light: {permanent: true}, unbreakable: true}
+        state: {lit: true}
+        notes: The Child's Flame. Its three steps and Wren's fate are not implemented yet.
+        description:
+          light: A flame that breathes, swelling and sinking in a slow sleeper's rhythm.
+          infravision: A small heat that swells and sinks slowly.
+          touch: A warmth that comes and goes like breathing.
+      - id: cradle
+        name: {light: cradle, infravision: cradle, touch: cradle}
+        material: wood
+        description:
+          light: "A cradle with a folded blanket, soft and new. Carved on its foot: NONE BUT HER."
+          infravision: A cradle and a folded cloth; letters cut on its foot read NONE BUT HER.
+          touch: A soft blanket; letters reading NONE BUT HER.
+      - id: name_wall
+        name: {light: wall of names, infravision: cut writing, touch: carved names}
+        material: stone
+        rules:
+          unbreakable: true
+          search_text: {light: "Twenty names, one for each year, each with a stroke beside it. You know some of them from Emberwick. The last space is smooth.", infravision: "Twenty names, one beneath another. The last space is smooth.", touch: "Twenty carved names. The last space is smooth."}
+        description:
+          light: Names, one beneath another, each with a stroke beside it.
+          infravision: Rows of cut writing.
+          touch: Rows of carved letters.
+      - id: pact_tablet
+        name: {light: stone tablet, infravision: lettered slab, touch: heavy slab}
+        material: stone
+        portable: true
+        rules: {unbreakable: true, bulky: true}
+        description:
+          light: "A slab cut close with writing: OSRIC HALE, FATHER, TAKES THE MOVING OF YEARS, FOR THE CHILD ALONE. A LIFE FOR EACH YEAR OF HERS, WHILE SHE BURNS."
+          infravision: "A flat slab of deep lettering: OSRIC HALE, FATHER, TAKES THE MOVING OF YEARS, FOR THE CHILD ALONE."
+          touch: "Deep letters under your fingers: OSRIC HALE, FATHER... FOR THE CHILD ALONE. A LIFE FOR EACH YEAR."
+
+transitions:
+  - id: outside_gate
+    from: outside
+    to: gate
+    ends:
+      outside: {label: goat path, description: {light: The path climbs to the fallen gatehouse., infravision: The path climbs to the gatehouse., touch: A path climbing through rubble.}}
+      gate: {label: way out, description: {light: Daylight shows between the leaning blocks., infravision: Daylight between the blocks., touch: A breath of fresh air.}}
+  - id: gate_cells
+    from: gate
+    to: cells
+    barrier: squeak_door
+    ends:
+      gate: {label: north door, description: {light: A plank door in the north wall., infravision: A door in the north wall., touch: Planks under your hand.}}
+      cells: {label: plank door, description: {light: The plank door back to the gate., infravision: A door., touch: Planks.}}
+  - id: gate_slag
+    from: gate
+    to: slag
+    ends:
+      gate: {label: stair down, description: {light: Wide steps descend toward a dull glow and heat., infravision: Wide steps descending into warmth., touch: Steps going down; rising heat.}}
+      slag: {label: stair up, description: {light: Wide steps climb toward the gate., infravision: Steps climbing., touch: Steps going up.}}
+  - id: cells_forge
+    from: cells
+    to: forge
+    ends:
+      cells: {label: low arch, description: {light: A low arch, and beyond it the clang of hammers., infravision: A low arch; beyond it, heat., touch: An arch; hammering beyond.}}
+      forge: {label: low arch to the cells, description: {light: A low arch toward the cells., infravision: A low arch., touch: An arch.}}
+  - id: slag_forge
+    from: slag
+    to: forge
+    ends:
+      slag: {label: causeway, description: {light: The causeway runs across the slag to a red-lit opening., infravision: The causeway runs over the heat to an opening., touch: A narrow walk between two fierce heats.}}
+      forge: {label: causeway to the slag pit, description: {light: An opening onto the causeway over the slag., infravision: An opening onto a causeway., touch: An opening; heat rising from below.}}
+  - id: forge_pact
+    from: forge
+    to: pact
+    barrier: pact_door
+    ends:
+      forge: {label: banded door, description: {light: The iron-banded door beyond the desk., infravision: A banded door., touch: Oak and iron.}}
+      pact: {label: banded door, description: {light: The banded door back to the forge., infravision: A banded door., touch: Oak and iron.}}
+  - id: cells_pact
+    from: cells
+    to: pact
+    hidden:
+      find: east_wall
+      dc: null
+      area_dc: 10
+      kind: secret_door
+      passive: {races: [Elf], dc: 15}
+      text: {light: "Some stones of the east wall pull loose: a narrow flue climbs into the dark.", infravision: "Stones of the east wall pull loose: a narrow flue climbs away.", touch: "Stones in the east wall shift under your hands: a narrow flue climbs."}
+    ends:
+      cells: {label: narrow flue, description: {light: A narrow flue behind the east wall, one person at a time., infravision: A narrow flue., touch: A narrow climbing flue.}}
+      pact: {label: narrow flue, description: {light: A narrow flue leading down., infravision: A narrow flue., touch: A narrow flue going down.}}
+  - id: pact_slag
+    from: pact
+    to: slag
+    one_way: true
+    on_traverse:
+      - {op: message, text: {light: "You slide down the chute into black water!", infravision: "You slide down into black water!", touch: "You slide down into black water!"}}
+      - {op: soak}
+      - {op: damage, who: each, dice: 1d3, check: {ability: Agility, dc: 10}, text: the fall}
+    ends:
+      pact: {label: chute, description: {light: A square mouth in the floor. Cold air and the smell of wet ash rise from it., infravision: A square opening dropping away., touch: A square opening; cold wet air; faint slapping water.}}

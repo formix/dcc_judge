@@ -1,525 +1,145 @@
 """
-DCC ruleset constants.
+DCC ruleset: tables and rule constants.
 
-Central place for all Dungeon Crawl Classics rule data:
-races, classes, the dice chain, and ability score names.
+Tables live as YAML in data/tables/ and are loaded here under their historical
+Python names, so callers keep importing them from this module. Rule constants
+(dice, durations, thresholds) stay in Python below.
+
+Sources: the public DCC compendium at https://roll20.net/compendium/dcc/,
+cited per table in each YAML file.
 """
 
-from models import Equipment, Condition
+from pathlib import Path
+
+import yaml
+
+from models import Equipment
+from models.equipment import EquipmentSchema
+
+TABLES_DIR = Path(__file__).resolve().parents[2] / "data" / "tables"
 
 
-# DCC playable races.
-CHARACTER_RACES: dict[str, float] = {"Human": 0.7, "Elf": 0.1, "Halfling": 0.1, "Dwarf": 0.1}
+def load_table(name: str) -> dict:
+    """Load data/tables/<name>.yaml."""
+    with open(TABLES_DIR / f"{name}.yaml", encoding="utf-8") as f:
+        return yaml.safe_load(f)
+
+
+def _equipment(name: str) -> list[Equipment]:
+    schema = EquipmentSchema()
+    return [schema.load(entry) for entry in load_table(name)["items"]]
+
+
+_races = load_table("races")["races"]
+_character = load_table("character")
+
+# Playable races and the chance of rolling each for a 0-level character.
+CHARACTER_RACES: dict[str, float] = {r: v["weight"] for r, v in _races.items()}
+# Base speed in feet.
+RACE_SPEED: dict[str, int] = {r: v["speed"] for r, v in _races.items()}
+# Races with infravision.
+INFRAVISION_RACES: set[str] = {r for r, v in _races.items() if v["infravision"]}
+
 # Each race maps to a list of (occupation, trained_weapon, trade_good) tuples.
 CHARACTER_OCCUPATIONS: dict[str, list[tuple[str, str, str]]] = {
-    "Human": [
-        ("Alchemist",            "Staff",       "Flask of oil"),
-        ("Animal trainer",       "Club",        "Pony"),
-        ("Armorer",              "Hammer, small",      "Iron helmet"),
-        ("Astrologer",           "Dagger",      "Spyglass"),
-        ("Barber",               "Razor",       "Scissors"),
-        ("Beadle",               "Staff",       "Holy symbol"),
-        ("Beekeeper",            "Staff",       "Jar of honey"),
-        ("Blacksmith",           "Hammer, small",      "Steel tongs"),
-        ("Butcher",              "Cleaver",     "Side of beef"),
-        ("Caravan guard",        "Short sword", "Linen, 1 yard"),
-        ("Cheesemaker",          "Cudgel",      "Stinky cheese"),
-        ("Cobbler",              "Awl",         "Shoehorn"),
-        ("Confidence artist",    "Dagger",      "Quality cloak"),
-        ("Cooper",               "Crowbar",     "Barrel"),
-        ("Costermonger",         "Knife",       "Fruit"),
-        ("Cutpurse",             "Dagger",      "Small chest"),
-        ("Ditch digger",         "Shovel",      "Fine dirt, 1 lb."),
-        ("Dock worker",          "Pole",        "1 late RPG book"),
-        ("Farmer",               "Pitchfork",   "Hen"),
-        ("Fortune-teller",       "Dagger",      "Tarot deck"),
-        ("Gambler",              "Club",        "Dice"),
-        ("Gongfarmer",           "Trowel",      "Sack of night soil"),
-        ("Grave digger",         "Shovel",      "Trowel"),
-        ("Guild beggar",         "Sling",       "Crutches"),
-        ("Healer",               "Club",        "Vial of holy water"),
-        ("Herbalist",            "Club",        "Herbs, 1 lb."),
-        ("Herder",               "Staff",       "Herding dog"),
-        ("Hunter",               "Shortbow",    "Deer pelt"),
-        ("Indentured servant",   "Staff",       "Locket"),
-        ("Jester",               "Dart",        "Silk clothes"),
-        ("Jeweler",              "Dagger",      "Gem worth 20 gp"),
-        ("Locksmith",            "Dagger",      "Fine tools"),
-        ("Mendicant",            "Club",        "Cheese dip"),
-        ("Mercenary",            "Longsword",   "Hide armor"),
-        ("Merchant",             "Dagger",      "4 gp, 14 sp, 27 cp"),
-        ("Miller/baker",         "Club",        "Flour, 1 lb."),
-        ("Minstrel",             "Dagger",      "Ukulele"),
-        ("Noble",                "Longsword",   "Gold ring worth 10 gp"),
-        ("Orphan",               "Club",        "Rag doll"),
-        ("Ostler",               "Staff",       "Bridle"),
-        ("Outlaw",               "Short sword", "Leather armor"),
-        ("Rope maker",           "Knife",       "Rope, 100'"),
-        ("Scribe",               "Dart",        "Parchment, 10 sheets"),
-        ("Shaman",               "Mace",        "Herbs, 1 lb."),
-        ("Slave",                "Club",        "Strange-looking rock"),
-        ("Smuggler",             "Sling",       "Waterproof sack"),
-        ("Soldier",              "Spear",       "Shield"),
-        ("Squire",               "Longsword",   "Steel helmet"),
-        ("Tax collector",        "Longsword",   "100 cp"),
-        ("Trapper",              "Sling",       "Badger pelt"),
-        ("Urchin",               "Stick",       "Begging bowl"),
-        ("Wainwright",           "Club",        "Pushcart"),
-        ("Weaver",               "Dagger",      "Fine suit of clothes"),
-        ("Wizard's apprentice",  "Dagger",      "Black grimoire"),
-        ("Woodcutter",           "Handaxe",     "Bundle of wood"),
-    ],
-    "Elf": [
-        ("artisan",        "Staff",        "Clay, 1 lb."),
-        ("barrister",      "Quill",        "Book"),
-        ("chandler",       "Scissors",     "Candles, 20"),
-        ("falconer",       "Dagger",       "Falcon"),
-        ("forester",       "Staff",        "Herbs, 1 lb."),
-        ("glassblower",    "Hammer, small",       "Glass beads"),
-        ("navigator",      "Shortbow",     "Spyglass"),
-        ("sage",           "Dagger",       "Parchment and quill pen"),
-    ],
-    "Halfling": [
-        ("chicken butcher", "Handaxe",     "Chicken meat, 5 lbs."),
-        ("dyer",            "Staff",       "Fabric, 3 yards"),
-        ("glovemaker",      "Awl",         "Gloves, 4 pairs"),
-        ("wanderer",        "Sling",       "Hex doll"),
-        ("haberdasher",     "Scissors",    "Fine suits, 3 sets"),
-        ("mariner",         "Knife",       "Sailcloth, 2 yards"),
-        ("moneylender",     "Short sword", "5 gp, 10 sp, 200 cp"),
-        ("trader",          "Short sword", "20 sp"),
-        ("vagrant",         "Club",        "Begging bowl"),
-    ],
-    "Dwarf": [
-        ("apothecarist",     "Cudgel", "Steel vial"),
-        ("blacksmith",       "Hammer, small", "Mithril, 1 oz."),
-        ("chest-maker",      "Chisel", "Wood, 10 lbs."),
-        ("herder",           "Staff",  "Sow"),
-        ("miner",            "Pick",   "Lantern"),
-        ("mushroom-farmer",  "Shovel", "Sack"),
-        ("rat-catcher",      "Club",   "Net"),
-        ("stonemason",       "Hammer, small", "Fine stone, 10 lbs."),
-    ],
+    race: [(o["occupation"], o["weapon"], o["trade_good"]) for o in occs]
+    for race, occs in load_table("occupations")["occupations"].items()
 }
 
-# Weapon stats. Peasant-tool entries use the damage and cost of the like weapon.
-# cost_cp is in copper pieces: 1 gp = 100 cp, 1 sp = 10 cp.
-# ranges = [close, medium, long] in feet; empty list = melee only.
-# backstab_damage = alternate damage dice used on a backstab attack.
-WEAPONS: list[Equipment] = [
-    # ── Core weapons ─────────────────────────────────────────────────────────
-    Equipment(name="Battleaxe",        cost_cp=700,   damage="1d10", tags={"melee", "slashing", "two-handed"}),
-    Equipment(name="Blackjack",        cost_cp=300,   damage="1d3",  tags={"melee", "blunt", "subdual"},     backstab="2d6"),
-    Equipment(name="Blowgun",          cost_cp=600,   damage="1d3",  tags={"ranged", "piercing"},            ranges=[20, 40, 60],    backstab="1d5"),
-    Equipment(name="Club",             cost_cp=300,   damage="1d4",  tags={"melee", "blunt"}),
-    Equipment(name="Crossbow",         cost_cp=3000,  damage="1d6",  tags={"ranged", "piercing", "two-handed"},            ranges=[80, 160, 240]),
-    Equipment(name="Dagger",           cost_cp=300,   damage="1d4",  tags={"melee", "ranged", "piercing"},   ranges=[10, 20, 30],    backstab="1d10"),
-    Equipment(name="Dart",             cost_cp=50,    damage="1d4",  tags={"ranged", "piercing"},            ranges=[20, 40, 60]),
-    Equipment(name="Flail",            cost_cp=600,   damage="1d6",  tags={"melee", "blunt"}),
-    Equipment(name="Garrote",          cost_cp=200,   damage="1",    tags={"melee", "blunt"},                backstab="3d4"),
-    Equipment(name="Handaxe",          cost_cp=400,   damage="1d6",  tags={"melee", "ranged", "slashing"},   ranges=[10, 20, 30]),
-    Equipment(name="Javelin",          cost_cp=100,   damage="1d6",  tags={"melee", "ranged", "piercing"},   ranges=[30, 60, 90]),
-    Equipment(name="Lance",            cost_cp=2500,  damage="1d12", tags={"melee", "piercing", "mounted", "reach", "double-on-charge"}),
-    Equipment(name="Longbow",          cost_cp=4000,  damage="1d6",  tags={"ranged", "piercing", "two-handed"},            ranges=[70, 140, 210]),
-    Equipment(name="Longsword",        cost_cp=1000,  damage="1d8",  tags={"melee", "slashing"}),
-    Equipment(name="Mace",             cost_cp=500,   damage="1d6",  tags={"melee", "blunt"}),
-    Equipment(name="Polearm",          cost_cp=700,   damage="1d10", tags={"melee", "piercing", "reach", "two-handed"}),
-    Equipment(name="Shortbow",         cost_cp=2500,  damage="1d6",  tags={"ranged", "piercing", "two-handed"},            ranges=[50, 100, 150]),
-    Equipment(name="Short sword",      cost_cp=700,   damage="1d6",  tags={"melee", "piercing", "slashing"}),
-    Equipment(name="Sling",            cost_cp=200,   damage="1d4",  tags={"ranged", "blunt"},               ranges=[40, 80, 160]),
-    Equipment(name="Spear",            cost_cp=300,   damage="1d8",  tags={"melee", "piercing"}),
-    Equipment(name="Staff",            cost_cp=50,    damage="1d4",  tags={"melee", "two-handed", "blunt"}),
-    Equipment(name="Two-handed sword", cost_cp=1500,  damage="1d10", tags={"melee", "slashing", "two-handed"}),
-    Equipment(name="Warhammer",        cost_cp=500,   damage="1d8",  tags={"melee", "blunt"}),
-    # ── Peasant tools (damage and cost of like weapon) ────────────────────────
-    Equipment(name="Awl",       cost_cp=30,  damage="1d4",  tags={"melee", "piercing"}),
-    Equipment(name="Chisel",    cost_cp=30,  damage="1d4",  tags={"melee", "piercing"}),
-    Equipment(name="Cleaver",   cost_cp=150, damage="1d6",  tags={"melee", "slashing"}),
-    Equipment(name="Crowbar",   cost_cp=30,  damage="1d4",  tags={"melee", "ranged", "blunt"}),
-    Equipment(name="Cudgel",    cost_cp=50,  damage="1d4",  tags={"melee", "blunt"}),
-    Equipment(name="Hammer, small", cost_cp=50,   damage="1d4",  tags={"melee", "ranged", "blunt"}),
-    Equipment(name="Knife",     cost_cp=200, damage="1d4",  tags={"melee", "ranged", "piercing"}),
-    Equipment(name="Pick",      cost_cp=3,   damage="1d4",  tags={"melee", "two-handed", "piercing"}),
-    Equipment(name="Pitchfork", cost_cp=50,  damage="1d8",  tags={"melee", "two-handed", "piercing"}),
-    Equipment(name="Pole",      cost_cp=5,   damage="1d4",  tags={"melee", "two-handed", "blunt", "reach"}),
-    Equipment(name="Quill",     cost_cp=1,   damage="1d4",  tags={"ranged", "piercing"}),
-    Equipment(name="Razor",     cost_cp=75,  damage="1d4",  tags={"melee", "slashing"}),
-    Equipment(name="Scissors",  cost_cp=500, damage="1d4",  tags={"melee", "piercing"}),
-    Equipment(name="Shovel",    cost_cp=35,  damage="1d4",  tags={"melee", "two-handed", "blunt"}),
-    Equipment(name="Stick",     cost_cp=0,   damage="1d4",  tags={"melee", "blunt"}),
-    Equipment(name="Trowel",    cost_cp=25,  damage="1d4",  tags={"melee", "slashing"}),
+WEAPONS: list[Equipment] = _equipment("weapons")
+AMMUNITIONS: list[Equipment] = _equipment("ammunition")
+ARMORS: list[Equipment] = _equipment("armor")
+GEAR: list[Equipment] = _equipment("gear")
+MOUNT_GEAR: list[Equipment] = _equipment("mount_gear")
+
+CHARACTER_CLASSES: list[str] = _character["classes"]
+ALIGNEMENTS: list[str] = _character["alignments"]
+GENDERS: list[str] = _character["genders"]
+# Worn-equipment slots.
+SLOTS: list[str] = _character["slots"]
+# The full DCC dice chain, weakest to strongest.
+DICE_CHAIN: list[int] = _character["dice_chain"]
+CHARACTER_ABILITIES: list[str] = _character["abilities"]
+# Table 1-1: ability score modifiers.
+ABILITY_MODIFIERS: dict[int, int] = {int(k): v for k, v in _character["ability_modifiers"].items()}
+# Saving throw -> ability at 0 level.
+SAVE_ABILITIES: dict[str, str] = _character["saves"]
+
+# Table 1-2: birth augur and lucky roll, as (augur name, what it applies to).
+BIRTH_AUGURS: list[tuple[str, str]] = [
+    (e["name"], e["applies_to"]) for e in load_table("birth_augurs")["entries"]
 ]
 
-
-# cost_cp is per single item. note indicates the standard bundle size sold by merchants.
-AMMUNITIONS: list[Equipment] = [
-    Equipment(name="Arrow",                cost_cp=25,  tags={"ammunition", "piercing"}, note="Sold in bundles of 20"),
-    Equipment(name="Arrow, silver-tipped", cost_cp=500, tags={"ammunition", "piercing", "silver"}),
-    Equipment(name="Quarrel",              cost_cp=33,  tags={"ammunition", "piercing"}, note="Sold in bundles of 30"),
-    Equipment(name="Sling stone",          cost_cp=3,   tags={"ammunition", "blunt"},    note="Sold in bundles of 30"),
-]
-
-
-# Armors and shields sourced from CHARACTER_OCCUPATIONS trade goods.
-# Each item has the "wearable" tag, a slot location tag, an AC condition,
-# and optionally check_penalty and speed conditions.
-# cost_cp is in copper pieces: 1 gp = 100 cp.
-ARMORS: list[Equipment] = [
-    Equipment(
-        name="Padded",
-        cost_cp=500,
-        fumble="d8",
-        tags={"wearable", "body"},
-        conditions=[Condition(name="ac", rounds=-1, target="ac", modifier=1)],
-    ),
-    Equipment(
-        name="Leather armor",
-        cost_cp=2000,
-        fumble="d8",
-        tags={"wearable", "body"},
-        conditions=[
-            Condition(name="ac",            rounds=-1, target="ac",            modifier=2),
-            Condition(name="check_penalty", rounds=-1, target="check_penalty", modifier=-1),
-        ],
-    ),
-    Equipment(
-        name="Studded leather",
-        cost_cp=4500,
-        fumble="d8",
-        tags={"wearable", "body"},
-        conditions=[
-            Condition(name="ac",            rounds=-1, target="ac",            modifier=3),
-            Condition(name="check_penalty", rounds=-1, target="check_penalty", modifier=-2),
-        ],
-    ),
-    Equipment(
-        name="Hide armor",
-        cost_cp=3000,
-        fumble="d12",
-        tags={"wearable", "body"},
-        conditions=[
-            Condition(name="ac",            rounds=-1, target="ac",            modifier=3),
-            Condition(name="check_penalty", rounds=-1, target="check_penalty", modifier=-3),
-        ],
-    ),
-    Equipment(
-        name="Scale mail",
-        cost_cp=8000,
-        fumble="d12",
-        tags={"wearable", "body"},
-        conditions=[
-            Condition(name="ac",            rounds=-1, target="ac",            modifier=4),
-            Condition(name="check_penalty", rounds=-1, target="check_penalty", modifier=-4),
-            Condition(name="speed",         rounds=-1, target="speed",         modifier=-5),
-        ],
-    ),
-    Equipment(
-        name="Chainmail",
-        cost_cp=15000,
-        fumble="d12",
-        tags={"wearable", "body"},
-        conditions=[
-            Condition(name="ac",            rounds=-1, target="ac",            modifier=5),
-            Condition(name="check_penalty", rounds=-1, target="check_penalty", modifier=-5),
-            Condition(name="speed",         rounds=-1, target="speed",         modifier=-5),
-        ],
-    ),
-    Equipment(
-        name="Banded mail",
-        cost_cp=25000,
-        fumble="d16",
-        tags={"wearable", "body"},
-        conditions=[
-            Condition(name="ac",            rounds=-1, target="ac",            modifier=6),
-            Condition(name="check_penalty", rounds=-1, target="check_penalty", modifier=-6),
-            Condition(name="speed",         rounds=-1, target="speed",         modifier=-5),
-        ],
-    ),
-    Equipment(
-        name="Half-plate",
-        cost_cp=55000,
-        fumble="d16",
-        tags={"wearable", "body"},
-        conditions=[
-            Condition(name="ac",            rounds=-1, target="ac",            modifier=7),
-            Condition(name="check_penalty", rounds=-1, target="check_penalty", modifier=-7),
-            Condition(name="speed",         rounds=-1, target="speed",         modifier=-10),
-        ],
-    ),
-    Equipment(
-        name="Full plate",
-        cost_cp=120000,
-        fumble="d16",
-        tags={"wearable", "body"},
-        conditions=[
-            Condition(name="ac",            rounds=-1, target="ac",            modifier=8),
-            Condition(name="check_penalty", rounds=-1, target="check_penalty", modifier=-8),
-            Condition(name="speed",         rounds=-1, target="speed",         modifier=-10),
-        ],
-    ),
-    Equipment(
-        name="Shield",
-        cost_cp=1000,
-        fumble="d8",
-        tags={"wearable", "shield"},
-        conditions=[
-            Condition(name="ac",            rounds=-1, target="ac",            modifier=1),
-            Condition(name="check_penalty", rounds=-1, target="check_penalty", modifier=-1),
-        ],
-    ),
-    Equipment(
-        name="Iron helmet",
-        cost_cp=1000,
-        tags={"wearable", "head"},
-        conditions=[Condition(name="armor", rounds=-1, target="ac", modifier=1)],
-    ),
-    Equipment(
-        name="Steel helmet",
-        cost_cp=1500,
-        tags={"wearable", "head"},
-        conditions=[Condition(name="armor", rounds=-1, target="ac", modifier=1)],
-    ),
-]
-
-
-# Non-weapon, non-armor starting equipment sourced from CHARACTER_OCCUPATIONS trade goods.
-# Animals and pure currency entries are excluded.
-# Duplicates across occupations are collapsed to a single entry.
-# cost_cp is in copper pieces: 1 gp = 100 cp, 1 sp = 10 cp.
-GEAR: list[Equipment] = [
-    # ── Alchemical & religious ────────────────────────────────────────────────
-    Equipment(name="Flask of oil",            cost_cp=20,    note="Lamp oil; sold per flask"),
-    Equipment(name="Flask, empty",            cost_cp=3),
-    Equipment(name="Holy symbol, wooden",     cost_cp=25),
-    Equipment(name="Holy symbol, bronze",     cost_cp=500),
-    Equipment(name="Holy symbol, silver",     cost_cp=2500),
-    Equipment(name="Vial of holy water",      cost_cp=2500),
-    # ── Food & consumables ────────────────────────────────────────────────────
-    Equipment(name="Jar of honey",            cost_cp=10),
-    Equipment(name="Side of beef",            cost_cp=100),
-    Equipment(name="Stinky cheese",           cost_cp=3),
-    Equipment(name="Fruit",                   cost_cp=2),
-    Equipment(name="Cheese dip",              cost_cp=3),
-    Equipment(name="Herbs",                   cost_cp=10,    note="Sold per lb."),
-    Equipment(name="Flour",                   cost_cp=2,     note="Sold per lb."),
-    Equipment(name="Rations",                 cost_cp=5,     note="Sold per day"),
-    # ── Tools & instruments ───────────────────────────────────────────────────
-    Equipment(name="Spyglass",                cost_cp=5000),
-    Equipment(name="Steel tongs",             cost_cp=125),
-    Equipment(name="Shoehorn",                cost_cp=5),
-    Equipment(name="Tarot deck",              cost_cp=250),
-    Equipment(name="Dice",                    cost_cp=10),
-    Equipment(name="Crutches",                cost_cp=15),
-    Equipment(name="Chain",                   cost_cp=3000,  note="10' length"),
-    Equipment(name="Chalk",                   cost_cp=1),
-    Equipment(name="Flint & steel",           cost_cp=15),
-    Equipment(name="Grappling hook",          cost_cp=100),
-    Equipment(name="Iron spike",              cost_cp=10),
-    Equipment(name="Mirror, hand-sized",      cost_cp=1000),
-    Equipment(name="Thieves' tools",          cost_cp=2500),
-    Equipment(name="Torch",                   cost_cp=1),
-    Equipment(name="Waterskin",               cost_cp=50),
-    Equipment(name="Fine tools",              cost_cp=2000,  note="Locksmith's picks and tools"),
-    Equipment(name="Ukulele",                 cost_cp=1000),
-    Equipment(name="Bridle",                  cost_cp=50),
-    Equipment(name="Lantern",                 cost_cp=1000),
-    Equipment(name="Net",                     cost_cp=100),
-    Equipment(name="Pushcart",                cost_cp=1000),
-    Equipment(name="Steel vial",              cost_cp=150),
-    # ── Books & writing ───────────────────────────────────────────────────────
-    Equipment(name="Book",                    cost_cp=5000),
-    Equipment(name="Parchment sheet",         cost_cp=20,    note="Sold in bundles of 10"),
-    Equipment(name="Parchment and quill pen", cost_cp=50),
-    Equipment(name="Black grimoire",          cost_cp=10000),
-    # ── Containers & storage ─────────────────────────────────────────────────
-    Equipment(name="Backpack",                cost_cp=200),
-    Equipment(name="Barrel",                  cost_cp=100),
-    Equipment(name="Small chest",             cost_cp=800),
-    Equipment(name="Sack, small",             cost_cp=8),
-    Equipment(name="Sack, large",             cost_cp=12),
-    Equipment(name="Waterproof sack",         cost_cp=20),
-    # ── Raw materials & trade goods ───────────────────────────────────────────
-    Equipment(name="Linen",                   cost_cp=5,     note="Sold per yard"),
-    Equipment(name="Rope",                    cost_cp=25,    note="Sold per 50'"),
-    Equipment(name="Candle",                  cost_cp=1,     note="Sold in bundles of 20"),
-    Equipment(name="Glass beads",             cost_cp=200),
-    Equipment(name="Clay",                    cost_cp=2,     note="Sold per lb."),
-    Equipment(name="Fabric",                  cost_cp=5,     note="Sold in bundles of 3 yards"),
-    Equipment(name="Sailcloth",               cost_cp=8,     note="Sold in bundles of 2 yards"),
-    Equipment(name="Wood",                    cost_cp=1,     note="Sold in bundles of 10 lbs."),
-    Equipment(name="Bundle of wood",          cost_cp=5),
-    Equipment(name="Fine stone",              cost_cp=1,     note="Sold in bundles of 10 lbs."),
-    Equipment(name="Mithril",                 cost_cp=2000,  note="Sold per oz. Rare metal (~20 gp/oz)"),
-    # ── Pelts & curiosities ───────────────────────────────────────────────────
-    Equipment(name="Deer pelt",               cost_cp=50),
-    Equipment(name="Badger pelt",             cost_cp=20),
-    Equipment(name="Strange-looking rock",    cost_cp=0),
-    Equipment(name="Rag doll",                cost_cp=15),
-    Equipment(name="Hex doll",                cost_cp=50),
-    Equipment(name="Begging bowl",            cost_cp=2),
-    Equipment(name="Gem worth 20 gp",         cost_cp=2000,  note="Stated value"),
-    # ── Wearables ─────────────────────────────────────────────────────────────
-    Equipment(name="Quality cloak",           cost_cp=200,   tags={"wearable", "shoulders"}),
-    Equipment(name="Locket",                  cost_cp=75,    tags={"wearable", "neck"}),
-    Equipment(name="Silk clothes",            cost_cp=500,   tags={"wearable", "body"}),
-    Equipment(name="Fine suit of clothes",    cost_cp=5000,  tags={"wearable", "body"}),
-    Equipment(name="Fine suit",               cost_cp=5000,  tags={"wearable", "body"},   note="Sold in bundles of 3"),
-    Equipment(name="Gloves",                  cost_cp=10,    tags={"wearable", "hands"},  note="Sold in bundles of 4 pairs"),
-    Equipment(name="Gold ring worth 10 gp",   cost_cp=1000,  tags={"wearable", "ring"},   note="Stated value"),
-]
-
-
-# Mount-related gear and animals.
-# Barding entries mirror the ARMORS list with costs multiplied by 4.
-# cost_cp is in copper pieces: 1 gp = 100 cp, 1 sp = 10 cp.
-MOUNT_GEAR: list[Equipment] = [
-    # ── Barding (armor for mounts, x4 cost of equivalent armor) ──────────────
-    Equipment(
-        name="Barding, padded",
-        cost_cp=2000,
-        fumble="d8",
-        tags={"wearable", "barding"},
-        conditions=[Condition(name="ac", rounds=-1, target="ac", modifier=1)],
-    ),
-    Equipment(
-        name="Barding, leather",
-        cost_cp=8000,
-        fumble="d8",
-        tags={"wearable", "barding"},
-        conditions=[
-            Condition(name="ac",            rounds=-1, target="ac",            modifier=2),
-            Condition(name="check_penalty", rounds=-1, target="check_penalty", modifier=-1),
-        ],
-    ),
-    Equipment(
-        name="Barding, studded leather",
-        cost_cp=18000,
-        fumble="d8",
-        tags={"wearable", "barding"},
-        conditions=[
-            Condition(name="ac",            rounds=-1, target="ac",            modifier=3),
-            Condition(name="check_penalty", rounds=-1, target="check_penalty", modifier=-2),
-        ],
-    ),
-    Equipment(
-        name="Barding, hide",
-        cost_cp=12000,
-        fumble="d12",
-        tags={"wearable", "barding"},
-        conditions=[
-            Condition(name="ac",            rounds=-1, target="ac",            modifier=3),
-            Condition(name="check_penalty", rounds=-1, target="check_penalty", modifier=-3),
-        ],
-    ),
-    Equipment(
-        name="Barding, scale mail",
-        cost_cp=32000,
-        fumble="d12",
-        tags={"wearable", "barding"},
-        conditions=[
-            Condition(name="ac",            rounds=-1, target="ac",            modifier=4),
-            Condition(name="check_penalty", rounds=-1, target="check_penalty", modifier=-4),
-            Condition(name="speed",         rounds=-1, target="speed",         modifier=-5),
-        ],
-    ),
-    Equipment(
-        name="Barding, chainmail",
-        cost_cp=60000,
-        fumble="d12",
-        tags={"wearable", "barding"},
-        conditions=[
-            Condition(name="ac",            rounds=-1, target="ac",            modifier=5),
-            Condition(name="check_penalty", rounds=-1, target="check_penalty", modifier=-5),
-            Condition(name="speed",         rounds=-1, target="speed",         modifier=-5),
-        ],
-    ),
-    Equipment(
-        name="Barding, banded mail",
-        cost_cp=100000,
-        fumble="d16",
-        tags={"wearable", "barding"},
-        conditions=[
-            Condition(name="ac",            rounds=-1, target="ac",            modifier=6),
-            Condition(name="check_penalty", rounds=-1, target="check_penalty", modifier=-6),
-            Condition(name="speed",         rounds=-1, target="speed",         modifier=-5),
-        ],
-    ),
-    Equipment(
-        name="Barding, half-plate",
-        cost_cp=220000,
-        fumble="d16",
-        tags={"wearable", "barding"},
-        conditions=[
-            Condition(name="ac",            rounds=-1, target="ac",            modifier=7),
-            Condition(name="check_penalty", rounds=-1, target="check_penalty", modifier=-7),
-            Condition(name="speed",         rounds=-1, target="speed",         modifier=-10),
-        ],
-    ),
-    Equipment(
-        name="Barding, full plate",
-        cost_cp=480000,
-        fumble="d16",
-        tags={"wearable", "barding"},
-        conditions=[
-            Condition(name="ac",            rounds=-1, target="ac",            modifier=8),
-            Condition(name="check_penalty", rounds=-1, target="check_penalty", modifier=-8),
-            Condition(name="speed",         rounds=-1, target="speed",         modifier=-10),
-        ],
-    ),
-    # ── Mounts ────────────────────────────────────────────────────────────────
-    Equipment(name="Donkey or mule",          cost_cp=800,   tags={"monster"}),
-    Equipment(name="Horse, regular",          cost_cp=7500,  tags={"monster"}),
-    Equipment(name="Horse, warhorse",         cost_cp=20000, tags={"monster"}),
-    Equipment(name="Pony",                    cost_cp=3000,  tags={"monster"}),
-    # ── Tack & feed ──────────────────────────────────────────────────────────
-    Equipment(name="Bridle and bit",          cost_cp=200),
-    Equipment(name="Feed",                    cost_cp=5,     note="Sold per day"),
-    Equipment(name="Saddle, pack",            cost_cp=1500),
-    Equipment(name="Saddle, riding",          cost_cp=3000),
-    Equipment(name="Saddlebags",              cost_cp=200),
-    Equipment(name="Stabling",                cost_cp=50,    note="Sold per day", tags={"immaterial"}),
-]
-
-
-# All DCC classes. Humans choose from Warrior/Wizard/Cleric/Thief.
-# Non-human races (Elf, Halfling, Dwarf) use their race name as their class.
-CHARACTER_CLASSES: list[str] = ["Warrior", "Wizard", "Cleric", "Thief", "Elf", "Halfling", "Dwarf"]
-
-ALIGNEMENTS: list[str] = ["Chaotic", "Neutral", "Lawful"]
-
-GENDERS: list[str] = ["Male", "Female"]
-
-# Equipment slots. ring_left / ring_right are the two ring slots.
-# Items tagged 'two-handed' require both 'weapon' and 'shield' to be empty.
-SLOTS: list[str] = [
-    "head", "shoulders", "back", "body",
-    "weapon", "shield",
-    "ring_left", "ring_right",
-    "neck", "feet", "belt",
-]
-
-# The full DCC dice chain, weakest → strongest.
-DICE_CHAIN: list[int] = [3, 4, 5, 6, 7, 8, 10, 12, 14, 16, 20, 24, 30, 100]
-
-# DCC ability names differ from standard D&D.
-CHARACTER_ABILITIES: list[str] = [
-    "Strength",
-    "Agility",      # DCC uses Agility, not Dexterity
-    "Stamina",      # DCC uses Stamina, not Constitution
-    "Personality",  # DCC uses Personality, not Wisdom
-    "Intelligence",
-    "Luck",         # Unique to DCC — used for Luck burns and checks
-]
+# Table 4-1: attack roll modifiers, as (melee, missile).
+ATTACK_MODIFIERS: dict[str, tuple] = {
+    k: tuple(v) for k, v in load_table("attack_modifiers")["modifiers"].items()
+}
 
 
 def get_ability_modifier(score: int) -> int:
     """
-    Return the ability modifier for a given ability score.
+    Return the DCC ability modifier for a score (Table 1-1).
 
-    Args:
-        score (int): The ability score.
-
-    Returns:
-        int: The ability modifier.
+    Scores below 1 return -128 (no meaningful modifier). Scores of 1-2 use the
+    score-3 modifier and scores above 18 use the score-18 modifier, since the
+    table only covers 3-18.
     """
-    return -128 if score < 1 else (score // 3) - 3
+    if score < 1:
+        return -128
+    return ABILITY_MODIFIERS[min(max(score, 3), 18)]
+
+
+# ── Rule constants ───────────────────────────────────────────────────────────
+
+# Hit points at 0 level: 1d4 + Stamina modifier (minimum 1).
+ZERO_LEVEL_HP_DIE = "1d4"
+# Starting funds at 0 level.
+ZERO_LEVEL_FUNDS = "5d12"   # copper pieces
+
+# ── Combat (https://roll20.net/compendium/dcc/Combat) ────────────────────────
+# Initiative: 1d20 + Agility modifier, once per encounter; d16 with a
+# two-handed weapon.
+INITIATIVE_DIE = 20
+TWO_HANDED_INITIATIVE_DIE = 16
+# Natural 20 is a critical hit (always hits); natural 1 is a fumble (always
+# misses). 0-level characters roll 1d4 on Crit Table I, adjusted by Luck.
+ZERO_LEVEL_CRIT_DIE = 4
+ZERO_LEVEL_CRIT_TABLE = "crit_table_i"
+# The fumble roll is adjusted by the reverse of the Luck modifier.
+UNARMORED_FUMBLE_DIE = "d4"
+# A successful attack always does at least 1 damage.
+MINIMUM_DAMAGE = 1
+# 0-level characters are trained in their occupation weapon; the -1d penalty
+# for untrained weapons is waived at 0 level.
+UNTRAINED_WEAPON_DIE_STEPS = -1
+UNTRAINED_PENALTY_WAIVED_AT_LEVEL_0 = True
+
+# Firing into melee: on a miss, 50% chance to hit a random ally in the melee.
+MISSILE_INTO_MELEE_FRIENDLY_FIRE = 0.5
+
+# Recovering the body: an ally who reaches the body within an hour rolls the
+# fallen character over; the fallen character makes a Luck check. Success:
+# 1 HP, groggy for an hour (-4 to all rolls), and -1 to a random one of
+# Strength, Agility or Stamina, permanently.
+RECOVER_BODY_WINDOW_MINUTES = 60
+RECOVER_BODY_GROGGY_MINUTES = 60
+RECOVER_BODY_GROGGY_PENALTY = -4
+RECOVER_BODY_ABILITY_LOSS = ("Strength", "Agility", "Stamina")
+
+# Natural healing: 1 HP per good night's rest while adventuring, 2 HP per day
+# of bed rest. Never above maximum. Ability loss heals at the same rate except
+# Luck, which does not heal.
+HEAL_NIGHT_REST = 1
+HEAL_BED_REST_DAY = 2
+
+# Burning Luck: any character may spend Luck points for an equal one-time
+# bonus on one of their own rolls, before or after rolling. Lost Luck does not
+# heal. Only warriors and dwarves may burn 1 Luck to cancel a fumble.
+
+# ── Equipment (https://roll20.net/compendium/dcc/Rules:Equipment) ────────────
+# One flask of oil burns for 6 hours in a lantern. Thrown burning oil: 1d6
+# damage plus fire; DC 10 Reflex save to put it out, else 1d6 more each round.
+LANTERN_MINUTES_PER_OIL_FLASK = 360
+THROWN_OIL_DAMAGE = "1d6"
+THROWN_OIL_SAVE_DC = 10
+# Lighting a torch or lantern takes one action.

@@ -1,0 +1,91 @@
+# Named rules and materials for catalog items (docs/design.md section 4.2),
+# keyed by item name as it appears in weapons/armor/gear.yaml. Items not
+# listed get their rules from their tags (weapon, armor) and material "misc".
+# Stack sizes and bulk are assumptions awaiting review.
+
+# Default material by item type.
+default_material:
+  weapon: iron
+  armor: leather
+  gear: misc
+
+materials:
+  Club: wood
+  Staff: wood
+  Cudgel: wood
+  Stick: wood
+  Pole: wood
+  Pitchfork: wood
+  Shortbow: wood
+  Longbow: wood
+  Quill: misc
+  Torch: wood
+  Barrel: wood
+  Small chest: wood
+  Pushcart: wood
+  Bundle of wood: wood
+  Wood: wood
+  Book: paper
+  Black grimoire: paper
+  Parchment sheet: parchment
+  Parchment and quill pen: parchment
+  Rope: cloth
+  Linen: cloth
+  Fabric: cloth
+  Sailcloth: cloth
+  Sack, small: cloth
+  Sack, large: cloth
+  Waterproof sack: leather
+  Backpack: leather
+  Waterskin: leather
+  Flask of oil: clay
+  Flask, empty: clay
+  Lantern: iron
+  Chain: iron
+  Iron spike: iron
+  Grappling hook: iron
+  Mirror, hand-sized: glass
+  Glass beads: glass
+  Jar of honey: clay
+  Rations: food
+  Side of beef: food
+  Stinky cheese: food
+  Fruit: food
+  Cheese dip: food
+  Flour: food
+  Padded: cloth
+  Shield: wood
+  Iron helmet: iron
+  Steel helmet: iron
+  Scale mail: iron
+  Chainmail: iron
+  Banded mail: iron
+  Half-plate: iron
+  Full plate: iron
+
+rules:
+  Torch:            {light: {minutes: 60}, stack: 2}
+  Candle:           {light: {minutes: 60}, stack: 20}   # duration is an assumption
+  Lantern:          {light: {minutes: 360, refill: oil, starts_empty: true}}
+  Flask of oil:     {oil: true, stack: 2}
+  Flint & steel:    {fire_starter: true}
+  Thieves' tools:   {lockpicks: true}
+  Fine tools:       {lockpicks: true}
+  Waterproof sack:  {waterproof: true}
+  Pick:             {breaks: [stone]}
+  Hammer, small:    {breaks: [stone]}
+  Crowbar:          {pry: true}
+  Chalk:            {stack: 10}
+  Iron spike:       {stack: 10}
+  Rations:          {stack: 4}
+  Dart:             {stack: 5}
+  Arrow:            {stack: 20}
+  Quarrel:          {stack: 20}
+  Sling stone:      {stack: 20}
+  Parchment sheet:  {stack: 10}
+  Barrel:           {bulky: true}
+  Small chest:      {bulky: true}
+  Side of beef:     {bulky: true}
+  Pushcart:         {bulky: true}
+  Bundle of wood:   {bulky: true}
+  Chain:            {bulky: true}

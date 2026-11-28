@@ -1,0 +1,9 @@
+# DCC playable races.
+# weight: chance of rolling the race for a 0-level character.
+# speed: base speed in feet (Table 3-4 footnote, https://roll20.net/compendium/dcc/Rules:Equipment).
+# infravision: decided in docs/design.md; not in the public compendium.
+races:
+  Human: {weight: 0.7, speed: 30, infravision: false}
+  Elf: {weight: 0.1, speed: 30, infravision: true}
+  Halfling: {weight: 0.1, speed: 20, infravision: true}
+  Dwarf: {weight: 0.1, speed: 20, infravision: true}

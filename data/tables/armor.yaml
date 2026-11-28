@@ -1,0 +1,17 @@
+# DCC armor and shields (Table 3-4). Conditions give AC, check penalty and speed.
+# Source: https://roll20.net/compendium/dcc/Rules:Equipment
+# cost_cp is in copper pieces: 1 gp = 100 cp, 1 sp = 10 cp.
+# ranges = [close, medium, long] in feet; omitted = melee only.
+items:
+  - {name: Padded, fumble: d8, cost_cp: 500, tags: [body, wearable], conditions: [{name: ac, target: ac, modifier: 1}]}
+  - {name: Leather armor, fumble: d8, cost_cp: 2000, tags: [body, wearable], conditions: [{name: ac, target: ac, modifier: 2}, {name: check_penalty, target: check_penalty, modifier: -1}]}
+  - {name: Studded leather, fumble: d8, cost_cp: 4500, tags: [body, wearable], conditions: [{name: ac, target: ac, modifier: 3}, {name: check_penalty, target: check_penalty, modifier: -2}]}
+  - {name: Hide armor, fumble: d12, cost_cp: 3000, tags: [body, wearable], conditions: [{name: ac, target: ac, modifier: 3}, {name: check_penalty, target: check_penalty, modifier: -3}]}
+  - {name: Scale mail, fumble: d12, cost_cp: 8000, tags: [body, wearable], conditions: [{name: ac, target: ac, modifier: 4}, {name: check_penalty, target: check_penalty, modifier: -4}, {name: speed, target: speed, modifier: -5}]}
+  - {name: Chainmail, fumble: d12, cost_cp: 15000, tags: [body, wearable], conditions: [{name: ac, target: ac, modifier: 5}, {name: check_penalty, target: check_penalty, modifier: -5}, {name: speed, target: speed, modifier: -5}]}
+  - {name: Banded mail, fumble: d16, cost_cp: 25000, tags: [body, wearable], conditions: [{name: ac, target: ac, modifier: 6}, {name: check_penalty, target: check_penalty, modifier: -6}, {name: speed, target: speed, modifier: -5}]}
+  - {name: Half-plate, fumble: d16, cost_cp: 55000, tags: [body, wearable], conditions: [{name: ac, target: ac, modifier: 7}, {name: check_penalty, target: check_penalty, modifier: -7}, {name: speed, target: speed, modifier: -10}]}
+  - {name: Full plate, fumble: d16, cost_cp: 120000, tags: [body, wearable], conditions: [{name: ac, target: ac, modifier: 8}, {name: check_penalty, target: check_penalty, modifier: -8}, {name: speed, target: speed, modifier: -10}]}
+  - {name: Shield, fumble: d4, cost_cp: 1000, tags: [shield, wearable], conditions: [{name: ac, target: ac, modifier: 1}, {name: check_penalty, target: check_penalty, modifier: -1}]}
+  - {name: Iron helmet, cost_cp: 1000, tags: [head, wearable], conditions: [{name: armor, target: ac, modifier: 1}]}
+  - {name: Steel helmet, cost_cp: 1500, tags: [head, wearable], conditions: [{name: armor, target: ac, modifier: 1}]}

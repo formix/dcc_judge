@@ -1,0 +1,30 @@
+# DCC character basics.
+abilities: [Strength, Agility, Stamina, Personality, Intelligence, Luck]
+classes: [Warrior, Wizard, Cleric, Thief, Elf, Halfling, Dwarf]
+alignments: [Chaotic, Neutral, Lawful]
+genders: [Male, Female]
+slots: [head, shoulders, back, body, weapon, shield, ring_left, ring_right, neck, feet, belt]
+dice_chain: [3, 4, 5, 6, 7, 8, 10, 12, 14, 16, 20, 24, 30, 100]
+
+# Table 1-1: ability score modifiers (https://roll20.net/compendium/dcc/Rules:Character%20Creation).
+ability_modifiers:
+  3: -3
+  4: -2
+  5: -2
+  6: -1
+  7: -1
+  8: 0
+  9: 0
+  10: 0
+  11: 0
+  12: 0
+  13: 1
+  14: 1
+  15: 1
+  16: 2
+  17: 2
+  18: 3
+
+# Saving throw -> ability at 0 level. Assumption: the public compendium only says
+# saves come from class and ability scores.
+saves: {reflex: Agility, fortitude: Stamina, will: Personality}

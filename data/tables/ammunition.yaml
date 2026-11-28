@@ -1,0 +1,9 @@
+# DCC ammunition. cost_cp is per single item; note gives the usual bundle.
+# Source: https://roll20.net/compendium/dcc/Rules:Equipment
+# cost_cp is in copper pieces: 1 gp = 100 cp, 1 sp = 10 cp.
+# ranges = [close, medium, long] in feet; omitted = melee only.
+items:
+  - {name: Arrow, cost_cp: 25, note: Sold in bundles of 20, tags: [ammunition, piercing]}
+  - {name: 'Arrow, silver-tipped', cost_cp: 500, tags: [ammunition, piercing, silver]}
+  - {name: Quarrel, cost_cp: 33, note: Sold in bundles of 30, tags: [ammunition, piercing]}
+  - {name: Sling stone, cost_cp: 3, note: Sold in bundles of 30, tags: [ammunition, blunt]}

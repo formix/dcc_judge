@@ -1,0 +1,138 @@
+# Rules of this game (docs/design.md), as opposed to DCC rules.
+# Entries marked "assumption" are proposals awaiting review (docs/engine-notes.md).
+
+# Section 5: base time cost in minutes for each action type. Free actions are 0.
+action_minutes:
+  look: 0
+  examine: 0
+  inventory: 0
+  status: 0
+  leader: 0
+  take: 0
+  drop: 0
+  give: 0
+  equip: 0
+  unequip: 0
+  light: 0            # from a flame; with a fire starter see fire_starter_minutes
+  extinguish: 0
+  fill: 0
+  rank: 0
+  talk: 0
+  move: 10            # an adventure can set its own cost on a transition
+  search: 10
+  force: 10
+  break: 10
+  pick_lock: 10
+  burn: 10
+  interact: 10        # an interaction can set its own cost
+  improvise: 10
+  wait: 10
+  repair_quick: 10    # section 4.7
+  heal: 10            # section 9.5: using healing supplies
+  buy: 0
+  sell: 0
+
+fire_starter_minutes: 10
+fire_starter_dc: 5                 # assumption
+
+# Section 6.3: vision. Time multiplier and die changes by perception mode.
+vision:
+  light:       {time_multiplier: 1, perception_die: 20, die_steps: 0, swing_at_nothing: 0.0}
+  infravision: {time_multiplier: 2, perception_die: 16, die_steps: -1, swing_at_nothing: 0.0}
+  touch:       {time_multiplier: 4, perception_die: 10, die_steps: -1, swing_at_nothing: 0.5}
+
+# Surprised on a d6 roll at or below this, by the leader's perception mode.
+# "light" is an assumption: the public DCC rules give no number.
+surprise:
+  light: 2
+  infravision: 3
+  touch: 5
+
+# Section 6.1: torch stage shown to the player, by minutes left (upper bounds).
+light_stages:
+  - {max: 10, stage: guttering}
+  - {max: 30, stage: burning low}
+  - {max: 100000, stage: bright}
+
+# Section 10.1: encounter level, a d6 range.
+encounter_level:
+  default_start: 1
+  max: 3
+  loud: 1
+  silent: -1
+  dark_per_10_minutes: 1
+  quiet_light_per_10_minutes: -1
+
+# Section 11: difficulties the Judge may choose.
+difficulties: {easy: 5, moderate: 10, hard: 15, exceptional: 20}
+
+# Group silence: one check by the least stealthy member. Assumption.
+silence: {ability: Agility, dc: 5}
+
+# Perception and searching use this ability. Assumption.
+perception_ability: Intelligence
+default_search_dc: 10
+
+# Section 9.7: morale (old-school 2d6, at or below the score holds).
+morale:
+  dice: 2d6
+  chief_bonus: 2
+  max_score: 12
+  fearless_after_successes: 2
+
+# Section 9.1: a combat costs this many minutes in total.
+combat_minutes: 10
+
+# Section 9.3: recovering the body uses d20 at or below Luck. Assumption: the
+# public DCC rules do not give the target.
+recover_body_die: 20
+
+# Unarmed attacks. Assumption.
+unarmed_damage: 1d3
+
+# Monster critical hits: roll the damage dice twice. Assumption: the public
+# DCC compendium has no monster critical rule.
+monster_crit_damage_multiplier: 2
+
+# Section 2.2: improvised weapon categories the Judge may choose. Assumption.
+improvised_weapons:
+  light: 1d3
+  medium: 1d4
+  heavy: 1d6
+  two_handed: 1d8
+
+# Hazard damage the Judge may choose. Falls are 1d6 per 10 feet. Assumption.
+hazards:
+  minor: 1d3
+  moderate: 1d6
+  severe: 2d6
+  deadly: 3d6
+fall_per_10_feet: 1d6
+
+# Section 4.4: how long something burns, by size, in minutes. Assumption.
+burn_minutes: {small: 30, medium: 60, large: 120}
+
+# Section 4.4: a soaked light source cannot be lit for this long.
+soak_minutes: 60
+
+# Section 4.3: carrying capacity.
+carry:
+  slots: 10
+  hands: 2
+  coins_per_slot: 100
+
+# Section 8.3: the shop. Selling starts at half the cost; a Personality check
+# can move it. Bands are assumptions.
+shop:
+  sell_base: 0.5
+  negotiation_bands:
+    - {min_total: 15, rate: 0.75}
+    - {min_total: 6, rate: 0.5}
+    - {min_total: -100, rate: 0.25}
+  negotiation_ability: Personality
+
+# Section 9.5: healing. Village rest is once per run. Assumption.
+healing:
+  village_rest_minutes: 480
+  village_rest_hp: 1
+  dressing_hp: 1d4

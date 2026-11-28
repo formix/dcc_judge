@@ -1,0 +1,44 @@
+# DCC weapons. Peasant tools use the damage and cost of the like weapon.
+# Source: https://roll20.net/compendium/dcc/Rules:Equipment
+# cost_cp is in copper pieces: 1 gp = 100 cp, 1 sp = 10 cp.
+# ranges = [close, medium, long] in feet; omitted = melee only.
+items:
+  - {name: Battleaxe, damage: 1d10, cost_cp: 700, tags: [melee, slashing, two-handed]}
+  - {name: Blackjack, damage: 1d3, backstab: 2d6, cost_cp: 300, tags: [blunt, melee, subdual]}
+  - {name: Blowgun, damage: 1d3, backstab: 1d5, cost_cp: 600, ranges: [20, 40, 60], tags: [piercing, ranged]}
+  - {name: Club, damage: 1d4, cost_cp: 300, tags: [blunt, melee]}
+  - {name: Crossbow, damage: 1d6, cost_cp: 3000, ranges: [80, 160, 240], tags: [piercing, ranged, two-handed]}
+  - {name: Dagger, damage: 1d4, backstab: 1d10, cost_cp: 300, ranges: [10, 20, 30], tags: [melee, piercing, ranged]}
+  - {name: Dart, damage: 1d4, cost_cp: 50, ranges: [20, 40, 60], tags: [piercing, ranged]}
+  - {name: Flail, damage: 1d6, cost_cp: 600, tags: [blunt, melee]}
+  - {name: Garrote, damage: '1', backstab: 3d4, cost_cp: 200, tags: [blunt, melee]}
+  - {name: Handaxe, damage: 1d6, cost_cp: 400, ranges: [10, 20, 30], tags: [melee, ranged, slashing]}
+  - {name: Javelin, damage: 1d6, cost_cp: 100, ranges: [30, 60, 90], tags: [melee, piercing, ranged]}
+  - {name: Lance, damage: 1d12, cost_cp: 2500, tags: [double-on-charge, melee, mounted, piercing, reach]}
+  - {name: Longbow, damage: 1d6, cost_cp: 4000, ranges: [70, 140, 210], tags: [piercing, ranged, two-handed]}
+  - {name: Longsword, damage: 1d8, cost_cp: 1000, tags: [melee, slashing]}
+  - {name: Mace, damage: 1d6, cost_cp: 500, tags: [blunt, melee]}
+  - {name: Polearm, damage: 1d10, cost_cp: 700, tags: [melee, piercing, reach, two-handed]}
+  - {name: Shortbow, damage: 1d6, cost_cp: 2500, ranges: [50, 100, 150], tags: [piercing, ranged, two-handed]}
+  - {name: Short sword, damage: 1d6, cost_cp: 700, tags: [melee, piercing, slashing]}
+  - {name: Sling, damage: 1d4, cost_cp: 200, ranges: [40, 80, 160], tags: [blunt, ranged]}
+  - {name: Spear, damage: 1d8, cost_cp: 300, tags: [melee, piercing]}
+  - {name: Staff, damage: 1d4, cost_cp: 50, tags: [blunt, melee, two-handed]}
+  - {name: Two-handed sword, damage: 1d10, cost_cp: 1500, tags: [melee, slashing, two-handed]}
+  - {name: Warhammer, damage: 1d8, cost_cp: 500, tags: [blunt, melee]}
+  - {name: Awl, damage: 1d4, cost_cp: 30, tags: [melee, piercing]}
+  - {name: Chisel, damage: 1d4, cost_cp: 30, tags: [melee, piercing]}
+  - {name: Cleaver, damage: 1d6, cost_cp: 150, tags: [melee, slashing]}
+  - {name: Crowbar, damage: 1d4, cost_cp: 30, tags: [blunt, melee, ranged]}
+  - {name: Cudgel, damage: 1d4, cost_cp: 50, tags: [blunt, melee]}
+  - {name: 'Hammer, small', damage: 1d4, cost_cp: 50, tags: [blunt, melee, ranged]}
+  - {name: Knife, damage: 1d4, cost_cp: 200, tags: [melee, piercing, ranged]}
+  - {name: Pick, damage: 1d4, cost_cp: 3, tags: [melee, piercing, two-handed]}
+  - {name: Pitchfork, damage: 1d8, cost_cp: 50, tags: [melee, piercing, two-handed]}
+  - {name: Pole, damage: 1d4, cost_cp: 5, tags: [blunt, melee, reach, two-handed]}
+  - {name: Quill, damage: 1d4, cost_cp: 1, tags: [piercing, ranged]}
+  - {name: Razor, damage: 1d4, cost_cp: 75, tags: [melee, slashing]}
+  - {name: Scissors, damage: 1d4, cost_cp: 500, tags: [melee, piercing]}
+  - {name: Shovel, damage: 1d4, cost_cp: 35, tags: [blunt, melee, two-handed]}
+  - {name: Stick, damage: 1d4, tags: [blunt, melee]}
+  - {name: Trowel, damage: 1d4, cost_cp: 25, tags: [melee, slashing]}

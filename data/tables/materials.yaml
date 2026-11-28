@@ -1,0 +1,20 @@
+# Material table (docs/design.md section 4.4). An object has one main material.
+#   combustible: can be set on fire.
+#   break: "anyone" can try with a Strength check, or a list of capabilities an
+#          item must have in its `breaks` rule (a pickaxe breaks stone).
+#   dc: Strength check to break or force it.
+#   water: "ruined" if plunging into water destroys it.
+# Every value is an assumption awaiting review.
+materials:
+  wood:      {combustible: true,  break: anyone,  dc: 10}
+  cloth:     {combustible: true,  break: anyone,  dc: 5}
+  leather:   {combustible: true,  break: anyone,  dc: 10}
+  paper:     {combustible: true,  break: anyone,  dc: 3, water: ruined}
+  parchment: {combustible: true,  break: anyone,  dc: 3, water: ruined}
+  food:      {combustible: false, break: anyone,  dc: 3}
+  glass:     {combustible: false, break: anyone,  dc: 5}
+  clay:      {combustible: false, break: anyone,  dc: 5}
+  bone:      {combustible: false, break: anyone,  dc: 10}
+  stone:     {combustible: false, break: [stone], dc: 15}
+  iron:      {combustible: false, break: [iron],  dc: 20}
+  misc:      {combustible: false, break: anyone,  dc: 10}

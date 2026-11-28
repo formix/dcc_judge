@@ -1,0 +1,17 @@
+# DCC Table 4-1: attack roll modifiers as [melee, missile].
+# Integers add to the roll; -1d/+1d step the action die; null means not applicable.
+# Source: https://roll20.net/compendium/dcc/Combat
+modifiers:
+  missile_medium_range: [null, -2]
+  missile_long_range: [null, -1d]
+  attacker_invisible: [2, null]
+  attacker_higher_ground: [1, null]
+  attacker_squeezing: [-1d, -1d]
+  attacker_entangled: [-1d, -1d]
+  untrained_weapon: [-1d, -1d]
+  missile_into_melee: [null, -1]
+  defender_behind_cover: [-2, -2]
+  defender_blinded: [2, 2]
+  defender_entangled: [+1d, +1d]
+  defender_helpless: [+1d, +1d]
+  defender_prone: [2, -2]
