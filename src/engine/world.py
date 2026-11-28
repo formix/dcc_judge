@@ -36,7 +36,45 @@ class World:
 
     # ── events ──────────────────────────────────────────────────────────────
     def emit(self, kind: str, text: str, **data: Any) -> None:
-        self.events.append({"kind": kind, "text": text, **data})
+        self.events.append({"kind": kind, "text": self.fill(text), **data})
+
+    def fill(self, value: Any) -> Any:
+        """Replace {village}, {tavern} and {destination} in text, recursively."""
+        if isinstance(value, str):
+            if "{" not in value:
+                return value
+            names = {"village": self.state.village.get("name", "the village"),
+                     "tavern": self.state.village.get("tavern", "the tavern"),
+                     "destination": self.adventure.hook.get("destination", "the wilds")}
+            for key, name in names.items():
+                value = value.replace("{" + key + "}", name)
+            return value
+        if isinstance(value, dict):
+            return {k: self.fill(v) for k, v in value.items()}
+        if isinstance(value, list):
+            return [self.fill(v) for v in value]
+        return value
+
+    def available_actions(self) -> list[dict[str, str]]:
+        """The scene's menu of actions, for scenes that list them (design 13)."""
+        return [{"label": self.fill(m["label"]), "command": m["command"]}
+                for m in self.scene.get("menu", []) if self._condition_met(m.get("when"), self.state.scene)]
+
+    @property
+    def in_village(self) -> bool:
+        return bool(self.scene.get("village"))
+
+    def deadline_at(self) -> int | None:
+        """Game minute of the adventure's deadline, once it has started."""
+        deadline = self.adventure.data.get("deadline")
+        if isinstance(deadline, int):
+            return deadline
+        return self.state.flags.get("deadline_at")
+
+    def start_deadline(self) -> None:
+        deadline = self.adventure.data.get("deadline")
+        if isinstance(deadline, dict) and "deadline_at" not in self.state.flags:
+            self.state.flags["deadline_at"] = self.now + deadline["minutes"]
 
     @property
     def now(self) -> int:
@@ -426,13 +464,16 @@ class World:
         self.note(f"{char.name} died here.")
 
     # ── time ────────────────────────────────────────────────────────────────
-    def advance(self, minutes: int) -> None:
-        """Advance the game clock: burn lights, run timers, expire conditions."""
+    def advance(self, minutes: int, travel: bool = False) -> None:
+        """Advance the game clock: burn lights, run timers, expire conditions.
+
+        Travel between the village and an adventure burns no torch time (design 13).
+        """
         if minutes <= 0:
             return
         was_lit = self.party_has_light()
         self.state.clock += minutes
-        for item in list(self.state.items.values()):
+        for item in ([] if travel else list(self.state.items.values())):
             if "light" in item.rules and item.state.get("lit"):
                 item.state["remaining"] = item.state.get("remaining", item.rules["light"]["minutes"]) - minutes
                 if item.state["remaining"] <= 0:
@@ -447,7 +488,7 @@ class World:
                     self.now - char.fallen_at > RECOVER_BODY_WINDOW_MINUTES:
                 self.kill(char, "No one reached the body in time.")
         self.check_deadline()
-        if was_lit and not self.party_has_light():
+        if was_lit and not self.party_has_light() and not travel:
             self.on_darkness()
 
     def _light_out(self, item: Item) -> None:
@@ -476,12 +517,13 @@ class World:
                                     f"(type: leader {seers[0].name}).")
 
     def check_deadline(self) -> None:
-        deadline = self.adventure.data.get("deadline")
-        if deadline and not self.state.deadline_fired and self.now >= deadline:
+        at = self.deadline_at()
+        if at is not None and not self.state.deadline_fired and self.now >= at:
             self.state.deadline_fired = True
             self.state.flags["deadline_passed"] = True
-            text = self.adventure.data.get("deadline_text", "The deadline has passed.")
-            self.emit("deadline", text)
+            deadline = self.adventure.data.get("deadline")
+            text = deadline.get("text") if isinstance(deadline, dict) else self.adventure.data.get("deadline_text")
+            self.emit("deadline", text or "The deadline has passed.")
 
     def schedule(self, delay: int, effects: list[dict], scene_id: str | None = None, self_id: str | None = None) -> None:
         self.state.timers.append({"due": self.now + delay, "effects": effects, "scene": scene_id, "self": self_id})
@@ -614,6 +656,9 @@ class World:
     # ── views ───────────────────────────────────────────────────────────────
     def scene_view(self) -> dict[str, Any]:
         """What the party perceives here, for the Judge and the player."""
+        return self.fill(self._scene_view())
+
+    def _scene_view(self) -> dict[str, Any]:
         mode = self.mode
         sid = self.state.scene
         objects = []
@@ -642,6 +687,7 @@ class World:
             "history": self.history(sid)[-8:],
             "lit": self.party_has_light(),
             **({"shop": self.shop_view()} if self.scene.get("shop") else {}),
+            **({"available_actions": self.available_actions()} if self.scene.get("menu") else {}),
         }
 
     def shop_view(self) -> dict[str, Any]:
@@ -669,6 +715,8 @@ class World:
         exits = [e["label"] for e in view["exits"]]
         if exits:
             lines.append("Ways on: " + "; ".join(exits) + ".")
+        if view.get("available_actions"):
+            lines.append("You can: " + "; ".join(a["label"] for a in view["available_actions"]) + ".")
         if view.get("shop"):
             lines.append("A trader here sells: " + ", ".join(f"{k} ({v} cp)" for k, v in view["shop"]["sells"].items()) + ".")
         if view["history"]:

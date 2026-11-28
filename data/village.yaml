@@ -1,0 +1,60 @@
+# The village every game begins in (docs/design.md 13). The engine adds these
+# scenes to every adventure. {village} and {tavern} are replaced by the names
+# rolled for this game; {destination} by the adventure's hook destination.
+#
+# The road from the tavern to the adventure's entrance is added from the
+# adventure's `hook` and stays hidden until the hook is revealed.
+
+scenes:
+  - id: village_tavern
+    name: "{tavern}"
+    village: true
+    lit: true
+    safe: true
+    encounters: none
+    rumors: true
+    description:
+      light: "{tavern} in {village}: low beams, a smoky hearth and benches worn smooth by elbows. Four of you share a table and a jug, and not one of you has paid for it."
+      infravision: "A low room, warm with bodies and a hearth. Four of you share a table."
+      touch: "Smoke, spilled ale and the press of bodies. A rough table under your hands."
+    menu:
+      - {label: Glean rumors, command: glean rumors}
+      - {label: Visit the shopkeeper, command: visit the shopkeeper}
+      - {label: "Take the road to {destination}", command: take the road, when: {flag: hook_revealed}}
+
+  - id: village_shop
+    name: "{village} General Goods"
+    village: true
+    lit: true
+    safe: true
+    encounters: none
+    description:
+      light: "A cramped shop off the green. Rope, tallow and tools hang from every beam. The shopkeeper counts coins without looking up."
+      infravision: "A cramped room hung with goods; someone counting."
+      touch: "Rope and tallow everywhere. Coins clink on a counter."
+    shop:
+      stock: [Torch, "Flint & steel", Flask of oil, Lantern, Candle, Rope, Iron spike, Chalk, Rations,
+              Waterskin, "Sack, small", "Sack, large", Waterproof sack, Backpack, Crowbar, Pole, Dagger,
+              Club, Staff, Spear, Sling, Sling stone, Shield, Padded, Leather armor]
+      custom:
+        - id: wound_dressing
+          name: {light: wound dressing, infravision: wound dressing, touch: wound dressing}
+          description: {light: A clean linen wound dressing., infravision: A rolled cloth., touch: A rolled cloth bandage.}
+          material: cloth
+          portable: true
+          cost_cp: 30
+          rules: {dressing: true, stack: 3}
+      limited: {wound dressing: 3}
+    menu:
+      - {label: "Buy something (buy [number] <item>)", command: "buy "}
+      - {label: "Sell or haggle (sell <item>, haggle <item>)", command: "sell "}
+      - {label: Back to the tavern, command: go back to the tavern}
+
+transitions:
+  - id: tavern_shop
+    from: village_tavern
+    to: village_shop
+    minutes: 0
+    ends:
+      village_tavern: {label: shopkeeper, description: {light: "The shop across the green.", infravision: "A shop across the green.", touch: "A shop across the green."}}
+      village_shop: {label: tavern, description: {light: "Back across the green to {tavern}.", infravision: "Back to the tavern.", touch: "Back to the tavern."}}

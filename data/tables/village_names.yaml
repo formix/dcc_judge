@@ -1,0 +1,34 @@
+# Names for the party's first village and its tavern (docs/design.md 13).
+# Not a DCC table. One of each is rolled when a new game starts.
+villages:
+  - Emberwick
+  - Ashmere
+  - Hollowford
+  - Grimsby Fen
+  - Thornwell
+  - Blackmoor Cross
+  - Dunmarrow
+  - Saltmarch
+  - Wychford
+  - Cinderholt
+  - Ravensbrook
+  - Mirewold
+  - Gallowsby
+  - Stonecairn
+  - Fellwater
+  - Brackenhurst
+  - Coldharbour
+  - Witherstead
+  - Harrowgate
+  - Mournhill
+taverns:
+  - The Drowned Ox
+  - The Crooked Lantern
+  - The Hanged Goat
+  - The Last Candle
+  - The Rusted Bell
+  - The Sleeping Sow
+  - The Broken Plough
+  - The Black Hen
+  - The Weeping Widow
+  - The Tallow and Tooth

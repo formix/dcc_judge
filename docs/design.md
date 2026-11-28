@@ -5,7 +5,7 @@ Crawl Classics (DCC) rules. A model, local or remote, acts as the Judge: it read
 a written adventure, rules on what the player attempts and narrates the results.
 
 This document covers the game's rules and architecture. Story content belongs in
-an adventure document, such as `adventure-E01.md`.
+an adventure document, such as `adventure-F01.md`.
 
 **How to read this document**
 
@@ -19,7 +19,7 @@ an adventure document, such as `adventure-E01.md`.
 
 **Included**
 
-- A 0-level funnel in a five-room dungeon, described in `adventure-E01.md`.
+- A 0-level funnel in a five-room dungeon, described in `adventure-F01.md`.
 - A village with a tavern and a shopkeeper. The shopkeeper lets the player sell
   and restock. The village and tavern do not count among the five rooms.
 - A party of at most four characters.
@@ -178,7 +178,7 @@ set]**. Extra behaviour comes from **named rules** that the engine understands.
 | `bane` | Extra damage against a named kind of creature |
 | `waterproof` | A container whose contents cannot be soaked or ruined |
 
-These are the universal rules. An adventure can add its own (section 14.1). The
+These are the universal rules. An adventure can add its own (section 15.1). The
 Judge can attach only listed rules, within engine limits **[A]**.
 
 ### 4.3 Carrying capacity
@@ -788,7 +788,7 @@ Ollama. No candidate model has been evaluated.
 The game autosaves after each action to a single slot. Saving is for resuming, not
 undoing. The save holds scene changes, item locations, characters, clock, torches,
 encounter level, discoveries, rulings, recorded facts, flags, counters, scheduled
-events, creature and room states, and active adventure rules (section 14.1).
+events, creature and room states, and active adventure rules (section 15.1).
 
 ### 12.4 Changes to existing code
 
@@ -804,7 +804,42 @@ Done in the first engine version (`docs/engine-notes.md` lists the details):
 | `get_ability_modifier` | Corrected to DCC Table 1-1 |
 | `README.md` | Updated |
 
-## 13. Winning, losing and advancement
+## 13. Starting a game: the village and the tavern
+
+- **The game always begins in the village's tavern.**
+- The first village's name is picked from a randomized village name table
+  (`data/tables/village_names.yaml`). The tavern's name is rolled from the same
+  file **[A]**.
+- In the tavern, the Judge states the available actions clearly. At the
+  beginning they are **glean rumors** and **visit the shopkeeper**.
+- Every adventure provides a **tavern hook**, revealed when gleaning rumors.
+- A level 0 party always gets funnel rumors or hooks, so a 0-level party can
+  only begin a funnel.
+- A funnel is classified as such in its adventure data file (`funnel: true`).
+  Adventure numbers starting with **F** are funnels (F01, F02...), and only
+  funnels have them.
+- The command line names the directory that contains all adventures. Its
+  default is `adventures`.
+
+The following are **[A]**:
+
+- For a new 0-level party, the engine picks a funnel from that directory at
+  random. Offering several hooks to choose from is left for later.
+- The first gleaning reveals the hook. Later gleanings give the adventure's other
+  rumors, one at a time, then nothing new. Gleaning takes 30 minutes.
+- Once the hook is known, the road to the adventure's entrance opens, and the
+  tavern offers a third action: take the road.
+- The village is the same for every adventure. The engine provides its scenes
+  (`data/village.yaml`), and adventure text may use `{village}` and `{tavern}`.
+- The shopkeeper's stock and prices are part of the village, not the adventure.
+- Village scenes are safe and lit: no random encounters and no fights.
+- The road takes the hook's travel time, 3 hours each way by default. Travel
+  burns no torch time and has no encounter checks. An adventure's deadline
+  starts when the party first sets out.
+- Each scene with a menu lists its actions in the results and the context
+  (`available_actions`); the console client always prints them.
+
+## 14. Winning, losing and advancement
 
 - The party wins by reaching the goal **and returning to the village**.
 - Any active character counts, including a replacement **[A]**.
@@ -814,13 +849,15 @@ Done in the first engine version (`docs/engine-notes.md` lists the details):
   the dungeon; they return to the village and train for a week. Outside a funnel,
   0-level characters follow the DCC experience chart.
 
-## 14. What an adventure defines
+## 15. What an adventure defines
 
 Story content lives in a separate adventure document; the first is
-`adventure-E01.md`. The engine needs to support these:
+`adventure-F01.md`. The engine needs to support these:
 
 | Element | Engine support |
 |---|---|
+| Funnel classification | `number` and `funnel`: numbers starting with F are funnels (section 13) |
+| Tavern hook and rumors | `hook` (text, destination, entrance, travel time) and `rumors` (section 13) |
 | Goal and evidence | Track what is found, carried and brought back, and how much is enough |
 | Endings | Several outcomes, each stating whether the funnel is won and what is saved |
 | Argument without a roll | The Judge matches a player's argument to authored facts; the engine confirms each was discovered |
@@ -837,7 +874,7 @@ Story content lives in a separate adventure document; the first is
 | Named recruits | Recruits with a fixed name, ability overrides, equipment and triggered behaviour |
 | Ending resolution | The order in which an ending's events, debts and other consequences are resolved, and epilogue lines that depend on what happened |
 
-### 14.1 Adventure rules
+### 15.1 Adventure rules
 
 An adventure can add rules of its own. They are written in the adventure, not in
 this document.
@@ -849,12 +886,12 @@ this document.
   persists, such as a curse on an item a survivor keeps, says so and says how long.
 - An adventure rule may make an exception to a universal rule within that
   adventure. It names the rule it overrides **[A]**.
-- Adventure rules are built from the features in section 14. A rule that cannot be
+- Adventure rules are built from the features in section 15. A rule that cannot be
   expressed that way needs engine code supplied with the adventure **[A]**.
 - An adventure rule is a secret until the party discovers its effects, like any
   other fact **[A]**.
 
-## 15. Building order [A]
+## 16. Building order [A]
 
 **Milestone 1: the dungeon,** with a 0-level party, built in slices:
 
@@ -864,8 +901,8 @@ this document.
 3. Encounters and the MCP server.
 4. Combat, death, replacements, evidence and the item of power.
 
-Until the village exists, the dungeon entrance stands in for it, including in
-validation.
+Every game begins in the village tavern (section 13). The village has the
+tavern and the shopkeeper; the rest of milestone 2 is listed in `backlog.md`.
 
 **Milestone 2: the village,** with travel, shop, money, replacements, the
 adventure's village characters and its endings. This completes the first version.
@@ -873,7 +910,7 @@ adventure's village characters and its endings. This completes the first version
 **Later:** level-up and training, classes, tavern recruits, retirement, followers,
 XP and magic.
 
-## 16. Open questions
+## 17. Open questions
 
 No decision is needed from the project owner at the moment.
 

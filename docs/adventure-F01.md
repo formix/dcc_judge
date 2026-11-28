@@ -205,7 +205,9 @@ The 24 hours are generous for one careful expedition. They punish repeated trips
 
 ## 5. The village
 
-**Emberwick** is a mud-street village under bare hills. It is safe and lit: no
+The village's name is rolled on the village name table when the game starts
+(`design.md` section 13); this document calls it **Emberwick**. It is a
+mud-street village under bare hills. It is safe and lit: no
 combat and no random encounters. If a character attacks a villager, neighbours pull
 them off before anyone is hurt, and the target will no longer speak with them.
 
@@ -213,15 +215,28 @@ them off before anyone is hurt, and the target will no longer speak with them.
 > because tomorrow is Quarter Day. Across the green, someone is stacking fresh
 > timber and will not meet your eye.
 
-### 5.1 The offer
+### 5.1 The tavern hook
 
-Father Crane gathers the four characters at the chapel. **Each is behind on
-tithes.** He offers to strike their debts if they bring proof by this time
-tomorrow. He explains the assize, not the confession. He says the old carter spoke
-of "the forge under the hills, where Hale settles accounts".
+The game begins in the village tavern, whose name is also rolled. The four
+characters share a jug they cannot pay for, on the eve of Quarter Day. The Judge
+offers two actions: **glean rumors** and **visit the shopkeeper**.
+
+**The hook.** The first time they glean rumors, the talk dies as Father Crane
+comes in out of the rain, grey-faced and coughing. He sets a tithe ledger on their
+table and taps four lines: their names. **Each is behind on tithes.** He offers to
+strike their debts if they bring proof by this time tomorrow. He explains the
+assize, not the confession. He says only that Hale "settles his accounts at the
+forge under the hills". He leaves a copper for their jug and goes. The road out
+of the village is now open: a third action, **take the road**, appears.
+
+Crane is approached the same way in every game, because a 0-level party is
+always offered a funnel's hook (`design.md` section 13). Players who want to
+know more can find him at the chapel before leaving.
 
 He will say that proof means "his hand, his name, or a living witness", and that
 one thing alone can be called a forgery, a lie or goblin work. He needs two.
+
+**Later gleanings** give the tavern rumors in section 5.4, one at a time.
 
 The deadline clock starts when the party leaves the village. The first journey is
 3 hours. While the party prepares, Crane coughs, and says he slept badly.
@@ -267,10 +282,10 @@ bread for the road.
 
 | Place | Who | What they offer |
 |---|---|---|
-| Chapel | Father Crane | The offer; receives proof; convenes the trial |
+| The tavern (name rolled) | Regulars; Father Crane | The hook on the first gleaning, then rumours. No recruits during the funnel. |
+| Chapel | Father Crane | Answers questions about the offer; receives proof; convenes the trial |
 | Elder's house | Osric, Wren | Wren's account. Osric is warm, calm and admits nothing before evidence exists. |
 | Shop | Hester Gage | Buying and selling; the Corin rumour |
-| The Drowned Ox | Regulars | Rumours. No recruits during the funnel. |
 | The well | Volunteers | Up to four replacements over the run (see `design.md`) |
 
 **Tavern rumours** (free; one per question):
@@ -1142,9 +1157,9 @@ ending.
 
 ## 16. Adventure rules
 
-These rules belong to this adventure only (`design.md`, section 14.1). They are
+These rules belong to this adventure only (`design.md`, section 15.1). They are
 removed from the save when the game ends unless the table says otherwise. The rest
-of the adventure uses the universal features in `design.md`, section 14.
+of the adventure uses the universal features in `design.md`, section 15.
 
 | Rule (`id`) | Summary | Section | Active from | Persists |
 |---|---|---|---|---|

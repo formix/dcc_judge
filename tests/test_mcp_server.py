@@ -27,10 +27,16 @@ def test_engine_server_over_stdio(tmp_path):
                     result = await session.call_tool(tool, arguments=args)
                     return json.loads(result.content[0].text) if tool != "judge_guide" else result.content[0].text
 
-                info = await call("adventure_info", adventure=str(ROOT / "adventures" / "elders_secret" / "adventure.yaml"))
-                assert info["ok"] and info["id"] == "elders_secret" and not info["saved_game"]
-                started = await call("new_game", adventure=info["source"], seed=2)
-                assert started["context"]["scene"]["scene"] == "outside"
+                folder = str(ROOT / "adventures")
+                listed = await call("list_adventures", adventures=folder)
+                assert any(a["ok"] and a["funnel"] and a["number"] == "F01" for a in listed)
+                assert not (await call("saved_game"))["saved_game"]
+                started = await call("new_game", adventures=folder, seed=2)
+                assert started["context"]["scene"]["scene"] == "village_tavern"
+                assert [a["command"] for a in started["available_actions"]] == ["glean rumors", "visit the shopkeeper"]
+                hook = await call("command", text="glean rumors")
+                assert any(e["kind"] == "hook" for e in hook["events"])
+                assert "take the road" in [a["command"] for a in hook["available_actions"]]
                 status = await call("command", text="status")
                 assert status["handled"] and "leader" in status["summary"]
                 unknown = await call("command", text="sing to the goats")
@@ -40,9 +46,10 @@ def test_engine_server_over_stdio(tmp_path):
                 inv = await call("inventory")
                 assert inv["display_only"] and len(inv["inventory"]) == 4
                 assert {"hands", "body", "head"} == set(inv["inventory"][0]["equipment"])
-                assert (await call("adventure_info", adventure=info["source"]))["saved_game"]
-                reset = await call("reset_game", adventure=info["source"])
+                assert (await call("saved_game"))["saved_game"]
+                reset = await call("reset_game")
                 assert reset["ok"] and reset["deleted_save"]
-                assert not (await call("adventure_info", adventure=info["source"]))["saved_game"]
+                assert not (await call("saved_game"))["saved_game"]
+                assert (await call("resume_game"))["ok"] is False
                 assert "PROPOSAL FORMAT" in await call("judge_guide")
     asyncio.run(run())

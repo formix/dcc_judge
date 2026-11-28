@@ -2,15 +2,18 @@
 Adventure data: loading and validation (docs/design.md sections 4 and 14).
 
 An adventure is a YAML file. The original is never modified; play changes
-live in the save. Top-level keys:
+live in the save. Every game begins in the village tavern (design 13): the
+engine adds the village scenes from data/village.yaml and a road from the
+tavern to the adventure's entrance, opened by the adventure's hook.
+Top-level keys:
 
     id, title           identity
-    start               scene the party starts in
-    home                scene survivors return to (the village, or the
-                        dungeon entrance standing in for it)
-    clock_start         game minutes already elapsed at the start
-    deadline            optional game minute after which the deadline fires
-    deadline_text       message shown when it fires
+    number              adventure number; numbers starting with F are funnels
+    funnel              true for a 0-level funnel (must match the number)
+    hook                {text, destination, entrance, travel_minutes}: revealed
+                        in the tavern by gleaning rumors; opens the road
+    rumors              further tavern rumors, given one per gleaning
+    deadline            optional {minutes, starts: departure, text}
     encounters          {level, table: [...]} shared wandering table
     creatures           creature statistics by id
     groups              creature groups by id
@@ -38,11 +41,16 @@ EFFECT_OPS = {
     "message", "set_state", "set_description", "set_flag", "reveal", "damage",
     "douse", "soak", "give_item", "add_item", "remove", "loud", "start_combat",
 }
+VILLAGE_FILE = Path(__file__).resolve().parents[2] / "data" / "village.yaml"
+START_SCENE = "village_tavern"
+ROAD_ID = "village_road"
+
 ITEM_KEYS = {"id", "name", "description", "material", "rules", "notes", "portable",
              "quantity", "cost_cp", "state", "hidden", "interactions", "catalog"}
 SCENE_KEYS = {"id", "name", "description", "lit", "safe", "encounters", "closed", "entrance",
-              "front_rank", "objects", "groups", "traps", "notes", "shop"}
-TRANSITION_KEYS = {"id", "from", "to", "one_way", "barrier", "minutes", "ends", "hidden", "on_traverse"}
+              "front_rank", "objects", "groups", "traps", "notes", "shop", "village", "rumors", "menu"}
+TRANSITION_KEYS = {"id", "from", "to", "one_way", "barrier", "minutes", "ends", "hidden", "on_traverse",
+                   "travel"}
 
 
 class AdventureError(ValueError):
@@ -121,6 +129,22 @@ class Adventure:
         return self.data.get("home", self.start)
 
     @property
+    def funnel(self) -> bool:
+        return bool(self.data.get("funnel"))
+
+    @property
+    def number(self) -> str:
+        return str(self.data.get("number", ""))
+
+    @property
+    def hook(self) -> dict[str, Any]:
+        return self.data.get("hook", {})
+
+    @property
+    def rumors(self) -> list:
+        return self.data.get("rumors", [])
+
+    @property
     def creatures(self) -> dict[str, dict]:
         return self.data.get("creatures", {})
 
@@ -147,6 +171,13 @@ class Adventure:
             errors.append(f"start scene '{self.start}' does not exist")
         if self.home not in self.scenes:
             errors.append(f"home scene '{self.home}' does not exist")
+        if self.number.upper().startswith("F") != self.funnel:
+            errors.append(f"adventure number '{self.number}' and 'funnel: {self.funnel}' disagree: "
+                          "numbers starting with F are funnels, and only those")
+        if self.data.get("hook") is not None:
+            for key in ("text", "destination", "entrance"):
+                if not self.hook.get(key):
+                    errors.append(f"hook needs '{key}'")
         ids: dict[str, str] = {}
         for sid in self.scenes:
             for oid in list(self.objects[sid]) + list(self.items[sid]):
@@ -221,9 +252,36 @@ MAX_ADVENTURE_BYTES = 5_000_000
 URL_TIMEOUT_SECONDS = 15
 
 
-def list_adventures() -> list[dict[str, str]]:
-    """Adventures bundled with the project: id and file path."""
-    return [{"id": p.parent.name, "path": str(p)} for p in sorted(ADVENTURES_DIR.glob("*/adventure.yaml"))]
+def resolve_adventures_dir(directory: str | Path | None) -> Path:
+    """The adventures directory: as given, else 'adventures' in the current
+    folder, else the project's own."""
+    if directory:
+        return Path(directory).expanduser().resolve()
+    here = Path("adventures").resolve()
+    return here if here.is_dir() else ADVENTURES_DIR
+
+
+def adventure_files(directory: str | Path | None = None) -> list[Path]:
+    """Adventure files in a directory: <dir>/<name>/adventure.yaml and <dir>/*.yaml."""
+    root = resolve_adventures_dir(directory)
+    return sorted(root.glob("*/adventure.yaml")) + sorted(root.glob("*.yaml"))
+
+
+def scan_adventures(directory: str | Path | None = None) -> list[dict[str, Any]]:
+    """Every adventure in a directory, valid or not, with what makes it unusable."""
+    found = []
+    for path in adventure_files(directory):
+        try:
+            adv = load_adventure(str(path))
+            found.append({"id": adv.id, "number": adv.number, "title": adv.title, "funnel": adv.funnel,
+                          "path": str(path), "ok": True})
+        except AdventureError as exc:
+            found.append({"path": str(path), "ok": False, "errors": [str(exc)]})
+    return found
+
+
+def list_adventures(directory: str | Path | None = None) -> list[dict[str, Any]]:
+    return scan_adventures(directory)
 
 
 def is_url(source: str) -> bool:
@@ -264,6 +322,35 @@ def read_source(source: str) -> str:
     return path.read_text(encoding="utf-8")
 
 
+def with_village(data: dict[str, Any]) -> dict[str, Any]:
+    """Add the village scenes and the road opened by the hook (design 13)."""
+    hook = data.get("hook")
+    if not isinstance(hook, dict) or not hook.get("entrance"):
+        raise AdventureError("Every adventure needs a tavern hook: 'hook' with text, destination and entrance.")
+    with open(VILLAGE_FILE, encoding="utf-8") as f:
+        village = yaml.safe_load(f)
+    data = dict(data)
+    data["scenes"] = village["scenes"] + list(data.get("scenes", []))
+    road = {
+        "id": ROAD_ID,
+        "from": START_SCENE,
+        "to": hook["entrance"],
+        "minutes": hook.get("travel_minutes", 180),
+        "travel": True,
+        "hidden": {"area_dc": None},
+        "ends": {
+            START_SCENE: {"label": "the road", "description": {
+                m: "The road out of {village} toward {destination}." for m in ("light", "infravision", "touch")}},
+            hook["entrance"]: {"label": "road back to {village}", "description": {
+                m: "The long road back to {village}." for m in ("light", "infravision", "touch")}},
+        },
+    }
+    data["transitions"] = village["transitions"] + [road] + list(data.get("transitions", []))
+    data["start"] = START_SCENE
+    data["home"] = START_SCENE
+    return data
+
+
 def load_adventure(source: str) -> Adventure:
     """Load and validate an adventure from a file path, folder, URL or bundled id."""
     try:
@@ -272,7 +359,7 @@ def load_adventure(source: str) -> Adventure:
         raise AdventureError(f"The adventure is not valid YAML: {exc}") from exc
     if not isinstance(data, dict) or "id" not in data:
         raise AdventureError("The adventure file needs an 'id' and the other top-level keys.")
-    adventure = Adventure(data, normalize_source(source))
+    adventure = Adventure(with_village(data), normalize_source(source))
     errors, _ = adventure.validate()
     if errors:
         raise AdventureError("Invalid adventure:\n  " + "\n  ".join(errors))

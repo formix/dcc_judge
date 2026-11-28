@@ -8,7 +8,7 @@ from pathlib import Path
 
 import pytest
 
-from engine.adventure import AdventureError, load_adventure
+from engine.adventure import AdventureError, load_adventure, scan_adventures
 from engine.game import Game
 from engine.state import SaveStore
 
@@ -38,6 +38,27 @@ def test_load_from_url(tmp_path):
         server.shutdown()
 
 
+def test_new_game_picks_a_funnel_from_the_adventures_directory(tmp_path):
+    folder = tmp_path / "adventures"
+    (folder / "f01").mkdir(parents=True)
+    shutil.copy(FILE, folder / "f01" / "adventure.yaml")
+    (folder / "broken.yaml").write_text("id: broken\n")
+    found = scan_adventures(folder)
+    assert [a["ok"] for a in found] == [True, False]
+    game, _ = Game.new(seed=3, adventures_dir=str(folder), store=SaveStore(tmp_path), log_dir=None)
+    assert game.adventure.id == "elders_secret" and game.state.scene == "village_tavern"
+    assert game.state.adventure_source == str(folder / "f01" / "adventure.yaml")
+
+
+def test_no_funnel_in_the_directory_is_an_error(tmp_path):
+    folder = tmp_path / "adventures"
+    folder.mkdir()
+    (folder / "a01.yaml").write_text(FILE.read_text().replace("number: F01", "number: A01")
+                                     .replace("funnel: true", "funnel: false"))
+    with pytest.raises(AdventureError, match="No funnel"):
+        Game.new(adventures_dir=str(folder), store=SaveStore(tmp_path), log_dir=None)
+
+
 def test_bad_sources_are_reported(tmp_path):
     with pytest.raises(AdventureError):
         load_adventure(str(tmp_path / "nope.yaml"))
@@ -51,5 +72,5 @@ def test_new_and_resume_from_a_path(tmp_path):
     store = SaveStore(tmp_path)
     game, _ = Game.new(str(FILE), seed=4, store=store, log_dir=None)
     assert game.state.adventure_source == str(FILE)
-    resumed = Game.load(str(FILE), store=store, log_dir=None)
+    resumed = Game.load(store=store, log_dir=None)
     assert resumed.state.to_dict() == game.state.to_dict()

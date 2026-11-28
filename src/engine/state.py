@@ -32,6 +32,7 @@ class GameState:
     adventure_id: str
     scene: str
     adventure_source: str = ""           # file path or URL the adventure was loaded from
+    village: dict[str, str] = field(default_factory=dict)  # names rolled for this game: name, tavern
     version: int = SAVE_VERSION
     turn: int = 0
     clock: int = 0                       # game minutes since the adventure began
@@ -102,26 +103,30 @@ class GameState:
 
 
 class SaveStore:
-    """One save slot per adventure, written atomically."""
+    """The single save slot (design 12.3), written atomically."""
+
+    SLOT = "game"
 
     def __init__(self, directory: Path = SAVES_DIR):
         self.directory = directory
 
-    def path(self, adventure_id: str) -> Path:
-        return self.directory / f"{adventure_id}.json"
+    @property
+    def path(self) -> Path:
+        return self.directory / f"{self.SLOT}.json"
 
-    def exists(self, adventure_id: str) -> bool:
-        return self.path(adventure_id).exists()
+    def exists(self) -> bool:
+        return self.path.exists()
 
     def save(self, state: GameState) -> None:
         self.directory.mkdir(parents=True, exist_ok=True)
-        path = self.path(state.adventure_id)
-        tmp = path.with_suffix(".tmp")
+        tmp = self.path.with_suffix(".tmp")
         tmp.write_text(json.dumps(state.to_dict(), indent=1, ensure_ascii=False), encoding="utf-8")
-        os.replace(tmp, path)
+        os.replace(tmp, self.path)
 
-    def load(self, adventure_id: str) -> GameState:
-        return GameState.from_dict(json.loads(self.path(adventure_id).read_text(encoding="utf-8")))
+    def load(self) -> GameState:
+        return GameState.from_dict(json.loads(self.path.read_text(encoding="utf-8")))
 
-    def delete(self, adventure_id: str) -> None:
-        self.path(adventure_id).unlink(missing_ok=True)
+    def delete(self) -> bool:
+        existed = self.path.exists()
+        self.path.unlink(missing_ok=True)
+        return existed

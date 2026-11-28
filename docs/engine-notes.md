@@ -34,26 +34,25 @@ perceivable context; the Judge turns it into a proposal and calls `act`. The
 engine validates and resolves it and returns events and a plain summary, which
 the Judge narrates. This is design 3.2 carried over MCP.
 
-**MCP tools:** `list_adventures`, `adventure_info`, `new_game`, `resume_game`, `reset_game`, `get_context`,
+**MCP tools:** `list_adventures`, `saved_game`, `new_game`, `resume_game`, `reset_game`, `get_context`,
 `command`, `act`, `inventory`, `customize_character`, `character_sheet`, `encounter_level`,
 `judge_guide`, and a `judge` prompt.
 
 **Running it:**
 
 ```bash
-python src/cli/judge.py ADVENTURE                        # no model: plain commands
-python src/cli/judge.py ADVENTURE --model gemma4-12b-128k:latest   # local Judge model
-python src/cli/judge.py ADVENTURE --model llama3.1 --host http://server:11434
+python src/cli/judge.py                                  # no model: plain commands
+python src/cli/judge.py --model gemma4-12b-128k:latest   # local Judge model
+python src/cli/judge.py --adventures DIR --model llama3.1 --host http://server:11434
 python src/servers/engine_server.py                      # the server alone, for another MCP client
-# ADVENTURE is the adventure file, a path or an http(s) URL, for example
-# adventures/elders_secret/adventure.yaml
+# --adventures is the directory containing all adventures (default: adventures)
 pytest -m "not model"                                    # fast tests
 pytest -m model                                          # model tests (DCC_JUDGE_TEST_MODEL)
 ```
 
 ## 2. Built so far
 
-Against `design.md` section 15, milestone 1:
+Against `design.md` section 16, milestone 1:
 
 | Slice | Status |
 |---|---|
@@ -78,8 +77,8 @@ Each is implemented; change any of them.
 | A3 | Removed `dice_server.py`, `scene_server.py`, `character_server.py`, `scene_service.py`, `character_service.py` and `character_sheet.py` | Superseded by the engine (design 12.4); they are in Git history |
 | A4 | All tables moved to YAML in `data/tables/`. `dcc.py` loads them under the same Python names | Your instruction |
 | A5 | The client keeps the name `src/cli/judge.py` and has no default model | The README already pointed there; without a model the game still runs |
-| A6 | Saves go to `saves/<adventure>.json`, logs to `logs/<adventure>.jsonl`, both ignored by Git. `DCC_JUDGE_DATA_DIR` moves them | Design 12.3 |
-| A8 | The adventure is given on the command line as a file path or an http(s) URL. URLs are downloaded with a 15-second timeout and a 5 MB limit, parsed as safe YAML, then validated. The save is keyed by the adventure's `id` and remembers its source | Your instruction |
+| A6 | One save slot, `saves/game.json`, recording which adventure was picked and where it came from; logs go to `logs/<adventure>.jsonl`, both ignored by Git. `DCC_JUDGE_DATA_DIR` moves them | Design 12.3 |
+| A8 | The command line names the directory containing all adventures (`--adventures`, default `adventures`; from another folder it falls back to the project's own). A new game picks a funnel from it at random with the game's dice. Unusable adventure files are listed and skipped. `new_game` can still force one by path, http(s) URL (15-second timeout, 5 MB limit) or id | Your instruction |
 | A7 | The engine accepts some sloppy model output: `"action"` for `"type"`, and `{"exit": "x"}` for `"x"` | Small models do this often |
 
 ### Rules
@@ -114,7 +113,7 @@ Each is implemented; change any of them.
 
 | # | Decision |
 |---|---|
-| D1 | Until the village exists, the outside of the gate stands in for it: it has the shop, and survivors win there |
+| D1 | The game begins in the village tavern (design 13). The engine adds the tavern, the shopkeeper and the road to every adventure from `data/village.yaml`. Gleaning takes 30 minutes; the road takes 3 hours each way and burns no torch time; the deadline starts on first departure. Survivors win on returning to the village |
 | D2 | Milestone 1 goal: bring out the satchel **and** the tablet. Maud, the witness, is not implemented yet |
 | D3 | The forge crew is neutral until provoked. Taking the satchel or coin jar while they are present needs a successful silent attempt; "under cover of the anvils" succeeds while the forge is not alerted |
 | D4 | Gate sentries are unaware: entering without sneaking, or a loud noise, starts the fight |
@@ -158,6 +157,6 @@ Saved for later in `backlog.md`.
    `gemma4-12b-128k:latest`, instead of plain commands?
 3. Do you accept the corrected ability modifiers (R1)? They make characters
    weaker than before in places, but match DCC.
-4. Should the entrance shop stay for milestone 1, or wait for the village?
+4. Should the tavern's name be rolled like the village's (now done), or fixed per village?
 5. Which assumptions in section 3 would you like to replace with the core
    rulebook's rules?

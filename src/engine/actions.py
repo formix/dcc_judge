@@ -25,7 +25,7 @@ from rulesets.game import MATERIALS, RULES, material
 FREE_TYPES = {"look", "examine", "inventory", "status", "leader", "take", "drop", "give", "equip",
               "unequip", "extinguish", "fill", "rank", "talk", "buy", "sell"}
 TIMED_TYPES = {"move", "search", "force", "break", "pick_lock", "burn", "interact", "improvise", "wait",
-               "repair", "heal"}
+               "repair", "heal", "glean"}
 COMBAT_TYPES = {"attack", "defend", "flee"}
 ALL_TYPES = FREE_TYPES | TIMED_TYPES | COMBAT_TYPES | {"light"}
 NO_ROUND_TYPES = {"look", "examine", "inventory", "status", "leader", "rank", "talk"}
@@ -227,7 +227,7 @@ class Actions:
             kind = action["type"]
             if self.state.phase == "combat":
                 if kind in ("move", "search", "force", "break", "pick_lock", "burn", "interact", "improvise",
-                            "repair", "heal", "buy", "sell"):
+                            "repair", "heal", "buy", "sell", "glean"):
                     raise ActionError(f"You cannot {kind} in the middle of a fight. Attack, defend or flee.")
                 if kind not in NO_ROUND_TYPES:
                     round_needed = True
@@ -294,8 +294,8 @@ class Actions:
                          f"{c.status}, {c.rank} rank{vision}")
         lines += self.world.light_status() or ["No light is burning."]
         lines.append(f"Time: {clock_text(self.state.clock)}.")
-        deadline = self.world.adventure.data.get("deadline")
-        if deadline:
+        deadline = self.world.deadline_at()
+        if deadline is not None:
             left = max(0, deadline - self.state.clock)
             lines.append(f"About {left // 60} hours left." if left >= 60 else "Very little time is left.")
         self.world.emit("status", "\n".join(lines))
@@ -518,12 +518,17 @@ class Actions:
         return item
 
     def timed(self, action: dict, base_minutes: int, resolve: Callable[[], None],
-              loud: bool = False, silent_success: bool | None = None) -> bool:
+              loud: bool = False, silent_success: bool | None = None, travel: bool = False) -> bool:
         """Run a timed action: noise, encounter checks, time, then its result.
 
-        Returns False if an encounter interrupted it.
+        Travel between the village and an adventure has no encounter checks and
+        burns no torch time. Returns False if an encounter interrupted it.
         """
         w = self.world
+        if travel:
+            w.advance(base_minutes, travel=True)
+            resolve()
+            return True
         enc = self.state.encounter
         start = enc["start"]
         minutes = base_minutes * w.time_multiplier()
@@ -626,6 +631,8 @@ class Actions:
         self._first_torch()
         minutes = t.get("minutes", RULES["action_minutes"]["move"])
         origin = self.state.scene
+        if t.get("travel") and w.in_village:
+            w.start_deadline()   # design 13: the clock starts when the party first sets out
 
         def resolve():
             self._spring_traps(t)
@@ -637,7 +644,7 @@ class Actions:
             if t.get("on_traverse"):
                 w.run_effects(t["on_traverse"], w.leader)
             self.enter_scene(silent=bool(silent))
-        self.timed(action, minutes, resolve, loud=loud, silent_success=silent)
+        self.timed(action, minutes, resolve, loud=loud, silent_success=silent, travel=bool(t.get("travel")))
 
     def _first_torch(self) -> None:
         """Design 6.2: the first torch lights free while still outside in daylight."""
@@ -893,6 +900,31 @@ class Actions:
             item.state["patched"] = True
             self.world.emit("repair", f"{char.name} patches the {item.label()}. It will hold for one more use.")
         self.timed(action, RULES["action_minutes"]["repair_quick"], resolve)
+
+    # the tavern -------------------------------------------------------------
+    def do_glean(self, action):
+        """Design 13: gleaning rumors in the tavern reveals the adventure's hook first."""
+        w = self.world
+        if not w.scene.get("rumors"):
+            raise ActionError("There is no one here to trade gossip with.")
+        hook = w.adventure.hook
+
+        def resolve():
+            if not self.state.flags.get("hook_revealed"):
+                self.state.flags["hook_revealed"] = True
+                w.discover("village_road")
+                w.emit("hook", text_for(hook["text"], w.mode) or str(hook["text"]))
+                self.state.facts.append(w.fill(f"Hook: the way to {hook['destination']} is open."))
+                return
+            index = self.state.flags.get("rumor_index", 0)
+            rumors = w.adventure.rumors
+            if index >= len(rumors):
+                w.emit("rumor", "You hear nothing you have not heard before.")
+                return
+            self.state.flags["rumor_index"] = index + 1
+            rumor = rumors[index]
+            w.emit("rumor", text_for(rumor, w.mode) or str(rumor))
+        self.timed(action, RULES["action_minutes"]["glean"], resolve)
 
     # healing and trade ------------------------------------------------------
     def do_heal(self, action):

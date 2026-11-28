@@ -1,20 +1,48 @@
-# The Elder's Secret: game data for milestone 1 (the dungeon).
-# Story and design: docs/adventure-E01.md. This file implements the parts the
-# engine supports so far; see "not yet implemented" in docs/engine-notes.md.
-# The dungeon entrance stands in for the village until milestone 2.
+# The Elder's Secret (F01, a funnel): game data.
+# Story and design: docs/adventure-F01.md. This file implements the parts the
+# engine supports so far; what is missing is in docs/backlog.md.
 
 id: elders_secret
+number: F01
+funnel: true
 title: The Elder's Secret
-start: outside
-home: outside
-clock_start: 180          # the 3-hour walk from Emberwick
-deadline: 1440            # 24 hours from setting out
-deadline_text: >-
-  Far away in Emberwick, the bells toll for the priest. Whatever you carry now,
-  it comes too late.
 
-# Milestone 1 stand-in for section 10 of the adventure: bring both documents
-# out. The witness, Maud, is not implemented yet.
+# Design 13: every game begins in the village tavern. Gleaning rumors there
+# reveals this hook first and opens the road to the entrance.
+hook:
+  destination: the forge under the hills
+  entrance: outside
+  travel_minutes: 180       # 3 hours each way
+  text: >-
+    The talk dies when Father Matthias Crane comes in out of the rain, grey-faced
+    and coughing. He sets a tithe ledger on your table and taps four lines: your
+    names, every one of you behind on what you owe the chapel. "Tomorrow is
+    Quarter Day," he says. "I have accused Elder Hale before the assize, and I have
+    no proof. Somewhere at the forge under the hills he settles his accounts. Bring
+    me his hand, his name or a living witness, and I strike your debts. Two things,
+    mind. One alone, they will call a lie. You have a day." He leaves a copper for
+    your jug and goes. The road out of {village} toward the hills is open to you.
+
+# Further rumors, one per gleaning, after the hook.
+rumors:
+  - "\"Hale's good to folk. Fed us two lean winters running.\""
+  - "\"Someone leaves for the hill works every Quarter Day. Wages must be good. None come back to say.\""
+  - "\"Corin the tinker set off for the hills owing Hale thirty silver. Never came back.\""
+  - "\"The old midwife vanished the winter the Hale girl was born.\""
+  - "\"The Hale girl goes down sick every midwinter. Her father walks into the hills, and she's up in three days.\""
+  - "\"Crane's been poorly since he shouted at Hale from the pulpit.\""
+  - "\"The priest's the one who writes down who owes what. Ever notice?\""
+
+# 24 hours from first setting out (design 13).
+deadline:
+  minutes: 1440
+  starts: departure
+  text: >-
+    Far away in {village}, the bells toll for the priest. Whatever you carry now,
+    it comes too late.
+
+# Stand-in for section 10 of the adventure until Maud, the witness, exists:
+# bring both documents back to the village.
 goal:
   items: [receipt_satchel, pact_tablet]
   need: 2
@@ -172,20 +200,6 @@ scenes:
     lit: true
     safe: true
     encounters: none
-    # Milestone 1 stand-in for Hester Gage's shop in Emberwick.
-    shop:
-      stock: [Torch, "Flint & steel", Flask of oil, Lantern, Candle, Rope, Iron spike, Chalk, Rations,
-              Waterskin, "Sack, small", "Sack, large", Waterproof sack, Backpack, Crowbar, Pole, Dagger,
-              Club, Staff, Spear, Sling, Sling stone, Shield, Padded, Leather armor]
-      custom:
-        - id: wound_dressing
-          name: {light: wound dressing, infravision: wound dressing, touch: wound dressing}
-          description: {light: A clean linen wound dressing., infravision: A rolled cloth., touch: A rolled cloth bandage.}
-          material: cloth
-          portable: true
-          cost_cp: 30
-          rules: {dressing: true, stack: 3}
-      limited: {wound dressing: 3}
     description:
       light: Bare hills under a white sky. A goat path climbs to a gatehouse that has fallen in on itself. Smoke rises thinly from somewhere inside.
       infravision: Bare hills under a white sky. A goat path climbs to a fallen gatehouse.
@@ -518,7 +532,7 @@ scenes:
         material: stone
         rules:
           unbreakable: true
-          search_text: {light: "Twenty names, one for each year, each with a stroke beside it. You know some of them from Emberwick. The last space is smooth.", infravision: "Twenty names, one beneath another. The last space is smooth.", touch: "Twenty carved names. The last space is smooth."}
+          search_text: {light: "Twenty names, one for each year, each with a stroke beside it. You know some of them from {village}. The last space is smooth.", infravision: "Twenty names, one beneath another. The last space is smooth.", touch: "Twenty carved names. The last space is smooth."}
         description:
           light: Names, one beneath another, each with a stroke beside it.
           infravision: Rows of cut writing.

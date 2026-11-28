@@ -53,6 +53,7 @@ pytestmark = pytest.mark.model
 
 def test_buying_light_in_plain_words(judge, new_game):
     game = new_game(5)
+    teleport(game, "village_shop")
     proposal, result = interpret(judge, game, "I'd like three torches and some flint and steel to light them")
     assert result["ok"], result
     bought = [a for a in proposal["actions"] if a["type"] == "buy"]
@@ -63,6 +64,7 @@ def test_buying_light_in_plain_words(judge, new_game):
 def test_sneaking_in_plain_words(judge, new_game):
     game = new_game(5)
     no_encounters(game)
+    teleport(game, "outside")
     proposal, result = interpret(judge, game, "We creep quietly up the path toward the smoke, keeping low")
     assert result["ok"], result
     move = next(a for a in proposal["actions"] if a["type"] == "move")
@@ -99,3 +101,10 @@ def test_judge_does_not_invent_a_key(judge, new_game):
     new_items = set(game.state.items) - before
     assert not any("key" in game.state.items[i].label().lower() for i in new_items)
     assert game.state.scene == "forge"
+
+
+def test_asking_around_the_tavern_reveals_the_hook(judge, new_game):
+    game = new_game(5)
+    proposal, result = interpret(judge, game, "We ask around the tavern for any news or work")
+    assert result["ok"], result
+    assert any(e["kind"] == "hook" for e in result["events"])

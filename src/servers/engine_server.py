@@ -18,7 +18,7 @@ if _src_dir not in sys.path:
 
 from mcp.server.mcpserver import MCPServer  # noqa: E402
 
-from engine.adventure import AdventureError, list_adventures as _list_adventures, load_adventure  # noqa: E402
+from engine.adventure import AdventureError, list_adventures as _list_adventures  # noqa: E402
 from engine.encounters import apply_level_events  # noqa: E402
 from engine.game import Game  # noqa: E402
 from engine.judge_guide import JUDGE_GUIDE  # noqa: E402
@@ -39,68 +39,58 @@ def _need_game() -> Game:
 
 
 @mcp.tool()
-def list_adventures() -> str:
-    """List the adventures bundled with the engine (id and file path), and
-    whether each has a saved game."""
+def list_adventures(adventures: str = "") -> str:
+    """List the adventures in an adventures directory (default: "adventures"),
+    with number, title, whether each is a funnel, and errors for unusable ones."""
+    return _dump(_list_adventures(adventures or None))
+
+
+@mcp.tool()
+def saved_game() -> str:
+    """Whether a saved game exists, to resume it or start over."""
     store = SaveStore()
-    return _dump([{**a, "saved_game": store.exists(a["id"])} for a in _list_adventures()])
-
-
-@mcp.tool()
-def adventure_info(adventure: str) -> str:
-    """Load and check an adventure from a file path or http(s) URL (or a bundled
-    id). Returns its id, title, warnings and whether it has a saved game."""
+    if not store.exists():
+        return _dump({"saved_game": False})
     try:
-        adv = load_adventure(adventure)
-    except AdventureError as exc:
-        return _dump({"ok": False, "errors": [str(exc)]})
-    _, warnings = adv.validate()
-    return _dump({"ok": True, "id": adv.id, "title": adv.title, "source": adv.source,
-                  "warnings": warnings, "saved_game": SaveStore().exists(adv.id)})
+        state = store.load()
+    except (ValueError, KeyError) as exc:
+        return _dump({"saved_game": True, "ok": False, "errors": [f"The save cannot be read: {exc}"]})
+    return _dump({"saved_game": True, "ok": True, "village": state.village, "phase": state.phase,
+                  "adventure_source": state.adventure_source})
 
 
 @mcp.tool()
-def reset_game(adventure: str) -> str:
-    """Delete the saved game of an adventure (file path or http(s) URL, or a
-    bundled id). The next new_game starts from scratch. Logs are kept."""
+def reset_game() -> str:
+    """Delete the saved game. The next new_game starts from scratch. Logs are kept."""
+    global _game
+    _game = None
+    return _dump({"ok": True, "deleted_save": SaveStore().delete()})
+
+
+@mcp.tool()
+def new_game(adventures: str = "", seed: int | None = None, adventure: str = "") -> str:
+    """Start a new game in the village tavern. The adventure is picked among the
+    funnels in the adventures directory (default: "adventures"), since a 0-level
+    party only gets funnel hooks; `adventure` forces one (file path, URL or
+    bundled id). Replaces the saved game. Returns the opening and the context."""
     global _game
     try:
-        adv = load_adventure(adventure)
-    except AdventureError as exc:
-        return _dump({"ok": False, "errors": [str(exc)]})
-    store = SaveStore()
-    existed = store.exists(adv.id)
-    store.delete(adv.id)
-    if _game is not None and _game.adventure.id == adv.id:
-        _game = None
-    return _dump({"ok": True, "id": adv.id, "deleted_save": existed})
-
-
-@mcp.tool()
-def new_game(adventure: str, seed: int | None = None) -> str:
-    """Start a new game from an adventure file path or http(s) URL (or a bundled
-    id). Overwrites that adventure's save. Returns the opening result and the
-    context. A party of four 0-level characters is rolled."""
-    global _game
-    try:
-        _game, result = Game.new(adventure, seed=seed)
+        _game, result = Game.new(adventure or None, seed=seed, adventures_dir=adventures or None)
     except AdventureError as exc:
         return _dump({"ok": False, "errors": [str(exc)]})
     return _dump({**result, "context": _game.context()})
 
 
 @mcp.tool()
-def resume_game(adventure: str) -> str:
-    """Resume the saved game of an adventure, given by file path or http(s) URL
-    (or a bundled id). Returns the context."""
+def resume_game() -> str:
+    """Resume the saved game. Returns the context."""
     global _game
+    if not SaveStore().exists():
+        return _dump({"ok": False, "errors": ["There is no saved game."]})
     try:
-        adv = load_adventure(adventure)
+        _game = Game.load()
     except AdventureError as exc:
-        return _dump({"ok": False, "errors": [str(exc)]})
-    if not SaveStore().exists(adv.id):
-        return _dump({"ok": False, "errors": [f"No saved game for '{adv.id}'."]})
-    _game = Game.load(adventure)
+        return _dump({"ok": False, "errors": [f"The saved game's adventure cannot be loaded: {exc}"]})
     return _dump({"ok": True, "context": _game.context()})
 
 

@@ -29,6 +29,7 @@ action_minutes:
   wait: 10
   repair_quick: 10    # section 4.7
   heal: 10            # section 9.5: using healing supplies
+  glean: 30           # section 13: gleaning rumors in the tavern (assumption)
   buy: 0
   sell: 0
 

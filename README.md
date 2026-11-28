@@ -33,7 +33,7 @@ and resolves. The model never decides a roll or changes the game by itself.
 Documents:
 
 - `docs/design.md`: the game's rules and architecture
-- `docs/adventure-E01.md`: the first adventure, The Elder's Secret (spoilers)
+- `docs/adventure-F01.md`: the first adventure, The Elder's Secret (spoilers)
 - `docs/engine-notes.md`: what the engine does today, decisions to review
 - `docs/backlog.md`: work saved for later
 
@@ -53,20 +53,35 @@ example `ollama pull gemma4:12b`. The engine was tested with
 
 ## Playing
 
-The first argument is the adventure file, a path or an http(s) URL:
+`--adventures` names the directory containing all adventures; it defaults to
+`adventures`. For a new game, the engine picks a funnel from it.
 
 ```bash
-python src/cli/judge.py adventures/elders_secret/adventure.yaml           # plain commands, no model
-python src/cli/judge.py adventures/elders_secret/adventure.yaml --model gemma4-12b-128k:latest
-python src/cli/judge.py https://example.com/adventure.yaml --model llama3.1 --host http://server:11434
-python src/cli/judge.py adventures/elders_secret/adventure.yaml --reset          # delete the save, start over
-python src/cli/judge.py adventures/elders_secret/adventure.yaml --reset --seed 7  # start over with fixed dice
+python src/cli/judge.py                                        # plain commands, no model
+python src/cli/judge.py --model gemma4-12b-128k:latest         # with a Judge model
+python src/cli/judge.py --adventures ~/dcc/adventures --model llama3.1 --host http://server:11434
+python src/cli/judge.py --reset                                # delete the save, start over
+python src/cli/judge.py --reset --seed 7                       # start over with fixed dice
 ```
 
 The game saves after every action and resumes where you left off. Type `help`
 in the game for the plain commands, such as `look`, `go stair down`,
 `sneak north door`, `search east wall`, `buy 4 torches`, `light torch`,
 `all attack`, `flee way out`, or `Bram, take the crock`.
+
+## How a game begins
+
+Every game begins in the tavern of a village whose name is rolled from a table.
+The Judge offers two actions: **glean rumors** and **visit the shopkeeper**.
+Gleaning rumors reveals the adventure's hook and opens the road to it.
+
+## Adventures
+
+An adventure is a YAML file in the adventures directory, either
+`<name>/adventure.yaml` or `<name>.yaml` (see `adventures/elders_secret/adventure.yaml`). It
+must provide a tavern `hook`. Funnels for 0-level parties are marked
+`funnel: true` and numbered with an F (F01, F02...); a 0-level party can only
+begin a funnel.
 
 ## Using another MCP client as the Judge
 
@@ -76,8 +91,9 @@ Run the server on its own and point any MCP client at it over stdio:
 python src/servers/engine_server.py
 ```
 
-`new_game`, `resume_game`, `reset_game` and `adventure_info` take the adventure as a file
-path or an http(s) URL. Tools: `new_game`, `resume_game`, `reset_game`, `get_context`, `command`, `act`, `inventory`,
+`new_game` and `list_adventures` take the adventures directory; `new_game` can
+also force one adventure by file path, URL or id. Tools: `new_game`, `resume_game`,
+`reset_game`, `saved_game`, `list_adventures`, `get_context`, `command`, `act`, `inventory`,
 `customize_character`, `character_sheet`, `list_adventures`,
 `encounter_level`, `judge_guide`. The `judge` prompt and `judge_guide` tool
 explain the turn loop and the proposal format.

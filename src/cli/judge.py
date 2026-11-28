@@ -8,14 +8,15 @@ Starts the engine as an MCP server over stdio and plays as the Judge:
 - results are narrated by the model, or printed plainly without one.
 
 Usage:
-    python src/cli/judge.py ADVENTURE [options]
+    python src/cli/judge.py [--adventures DIR] [options]
 
-    ADVENTURE is the adventure file: a path or an http(s) URL.
+    --adventures is the directory containing all adventures (default:
+    "adventures"). The engine picks a funnel from it for a new 0-level party.
 
-    python src/cli/judge.py adventures/elders_secret/adventure.yaml
-    python src/cli/judge.py adventures/elders_secret/adventure.yaml --model gemma4-12b-128k:latest
-    python src/cli/judge.py https://example.com/my_adventure.yaml --model llama3.1 --host http://server:11434
-    python src/cli/judge.py adventures/elders_secret/adventure.yaml --reset --seed 7
+    python src/cli/judge.py
+    python src/cli/judge.py --model gemma4-12b-128k:latest
+    python src/cli/judge.py --adventures ~/dcc/adventures --model llama3.1 --host http://server:11434
+    python src/cli/judge.py --reset --seed 7
 """
 
 from __future__ import annotations
@@ -34,6 +35,7 @@ if _src_dir not in sys.path:
 from mcp import ClientSession  # noqa: E402
 from mcp.client.stdio import StdioServerParameters, stdio_client  # noqa: E402
 from rich.console import Console  # noqa: E402
+from rich.markup import escape  # noqa: E402
 from rich.panel import Panel  # noqa: E402
 from rich.prompt import Prompt  # noqa: E402
 from rich.text import Text  # noqa: E402
@@ -149,6 +151,13 @@ def _item(entry: dict | None) -> str:
     return text
 
 
+def show_actions(actions: list[dict] | None) -> None:
+    """The scene's menu, stated clearly (design 13)."""
+    if actions:
+        console.print("[bold cyan]Available actions:[/bold cyan] " +
+                      "  ".join(f"[cyan]•[/cyan] {escape(a['label'])}" for a in actions) + "\n")
+
+
 def show_rolls(result: dict) -> None:
     for e in result.get("events", []):
         if e.get("kind") in ("check",):
@@ -178,6 +187,10 @@ class Session:
         return data
 
     def narrate(self, result: dict) -> None:
+        self._narrate(result)
+        show_actions(result.get("available_actions"))
+
+    def _narrate(self, result: dict) -> None:
         show_rolls(result)
         if result.get("clarify"):
             show(result["clarify"])
@@ -275,26 +288,31 @@ async def run(args) -> None:
         async with ClientSession(r, w) as mcp:
             await mcp.initialize()
             session = Session(mcp, judge)
-            source = args.adventure if re.match(r"^https?://", args.adventure, re.I) else \
-                os.path.abspath(os.path.expanduser(args.adventure))
-            info = await session.call("adventure_info", adventure=source)
-            if not info.get("ok"):
-                console.print(f"[red]{chr(10).join(info.get('errors', []))}[/red]")
-                return
-            console.print(f"[bold]{info['title']}[/bold] [dim]({info['source']})[/dim]")
-            for warning in info.get("warnings", []):
-                console.print(f"[yellow]Adventure warning: {warning}[/yellow]")
-            if args.reset and info["saved_game"]:
-                await session.call("reset_game", adventure=source)
+            adventures = await session.call("list_adventures", adventures=args.adventures)
+            usable = [a for a in adventures if a.get("ok")]
+            for bad in (a for a in adventures if not a.get("ok")):
+                console.print(f"[yellow]Skipping {bad['path']}: {bad['errors'][0]}[/yellow]")
+            console.print(f"[dim]Adventures: {len(usable)} in {args.adventures}[/dim]")
+            saved = await session.call("saved_game")
+            if args.reset and saved["saved_game"]:
+                await session.call("reset_game")
                 console.print("[dim]The saved game was deleted. Starting over.[/dim]")
-                info["saved_game"] = False
-            if info["saved_game"]:
-                result = await session.call("resume_game", adventure=source)
-                console.print("[dim]Resuming your saved game.[/dim]")
-                session.narrate({"summary": (await session.call("command", text="look"))["summary"],
-                                 "perception": result["context"]["scene"]["perception"], "ok": True})
+                saved["saved_game"] = False
+            result = None
+            if saved["saved_game"]:
+                result = await session.call("resume_game")
+                if result.get("ok"):
+                    console.print(f"[dim]Resuming your saved game in {saved.get('village', {}).get('name', 'the village')}.[/dim]")
+                    look = await session.call("command", text="look")
+                    session.narrate({"summary": look["summary"], "ok": True,
+                                     "perception": result["context"]["scene"]["perception"],
+                                     "available_actions": look.get("available_actions")})
+                else:
+                    console.print(f"[red]{chr(10).join(result.get('errors', []))}[/red] "
+                                  "[dim](start over with --reset)[/dim]")
+                    return
             else:
-                result = await session.call("new_game", adventure=source, seed=args.seed)
+                result = await session.call("new_game", adventures=args.adventures, seed=args.seed)
                 if not result.get("ok", True) and result.get("errors"):
                     console.print(f"[red]{result['errors']}[/red]")
                     return
@@ -328,13 +346,21 @@ async def run(args) -> None:
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="DCC Judge console client")
-    parser.add_argument("adventure", help="adventure file: a path or an http(s) URL")
+    parser.add_argument("--adventures", default="adventures",
+                        help="directory containing all adventures (default: adventures)")
     parser.add_argument("--model", help="Ollama model for the Judge (omit for plain commands only)")
     parser.add_argument("--host", help="Ollama host, e.g. http://localhost:11434 or a remote server")
     parser.add_argument("--reset", "--new", dest="reset", action="store_true",
-                        help="delete this adventure's saved game and start a new one")
+                        help="delete the saved game and start a new one")
     parser.add_argument("--seed", type=int, help="dice seed for a new game")
-    asyncio.run(run(parser.parse_args()))
+    args = parser.parse_args()
+    folder = os.path.abspath(os.path.expanduser(args.adventures))
+    if args.adventures == "adventures" and not os.path.isdir(folder):
+        folder = os.path.join(os.path.dirname(_src_dir), "adventures")   # the project's own
+    if not os.path.isdir(folder):
+        parser.error(f"no adventures directory at {folder}")
+    args.adventures = folder
+    asyncio.run(run(args))
 
 
 if __name__ == "__main__":

@@ -15,14 +15,14 @@ from typing import Any, Callable
 
 from engine import combat
 from engine.actions import ActionError, Actions, NeedsConfirmation, clock_text, validate_proposal
-from engine.adventure import Adventure, load_adventure
+from engine.adventure import Adventure, AdventureError, load_adventure, resolve_adventures_dir, scan_adventures
 from engine.character import generate_character
 from engine.dice import Dice
 from engine.encounters import apply_level_events
 from engine.parser import parse
 from engine.state import DATA_DIR, GameState, SaveStore
 from engine.world import World
-from rulesets.dcc import ALIGNEMENTS, GENDERS
+from rulesets.dcc import ALIGNEMENTS, GENDERS, load_table
 from rulesets.game import RULES
 
 LOGS_DIR = DATA_DIR / "logs"
@@ -43,10 +43,25 @@ class Game:
 
     # ── creation ────────────────────────────────────────────────────────────
     @classmethod
-    def new(cls, source: str, seed: int | None = None, party_size: int = 4, **kwargs) -> tuple["Game", dict]:
-        """Start a game. `source` is an adventure file path, folder, URL or bundled id."""
-        adventure = load_adventure(source)
+    def new(cls, source: str | None = None, seed: int | None = None, party_size: int = 4,
+            adventures_dir: str | None = None, **kwargs) -> tuple["Game", dict]:
+        """Start a game in the village tavern.
+
+        The adventure is picked at random among the funnels in `adventures_dir`
+        (a 0-level party only gets funnel hooks, design 13), unless `source`
+        names one: a file path, folder, URL or bundled id.
+        """
         dice = Dice(seed)
+        if source is None:
+            funnels = [a for a in scan_adventures(adventures_dir) if a["ok"] and a["funnel"]]
+            if not funnels:
+                raise AdventureError(f"No funnel adventure in {resolve_adventures_dir(adventures_dir)}.")
+            source = dice.choice(funnels)["path"]
+        adventure = load_adventure(source)
+        if party_size and not adventure.funnel:
+            # Design 13: a 0-level party always gets funnel hooks.
+            raise AdventureError(f"'{adventure.title}' is not a funnel. A 0-level party can only begin a funnel "
+                                 "(an adventure numbered F...).")
         start_level = adventure.encounters.get("level", RULES["encounter_level"]["default_start"])
         state = GameState(
             adventure_id=adventure.id,
@@ -55,6 +70,8 @@ class Game:
             clock=adventure.data.get("clock_start", 0),
             encounter={"level": start_level, "start": start_level, "carry": 0, "dark": 0, "quiet": 0},
         )
+        names = load_table("village_names")
+        state.village = {"name": dice.choice(names["villages"]), "tavern": dice.choice(names["taverns"])}
         game = cls(adventure, state, dice, **kwargs)
         world = game.world()
         for sid, items in adventure.items.items():
@@ -74,13 +91,11 @@ class Game:
         return game, result
 
     @classmethod
-    def load(cls, source: str, **kwargs) -> "Game":
-        """Resume the saved game of an adventure (file path, folder, URL or bundled id)."""
+    def load(cls, **kwargs) -> "Game":
+        """Resume the saved game, reloading its adventure from where it came from."""
         store = kwargs.pop("store", None) or SaveStore()
-        adventure = load_adventure(source)
-        state = store.load(adventure.id)
-        state.adventure_source = adventure.source or source
-        return cls(adventure, state, store=store, **kwargs)
+        state = store.load()
+        return cls(load_adventure(state.adventure_source), state, store=store, **kwargs)
 
     def world(self) -> World:
         return World(self.adventure, self.state, self.dice)
@@ -147,7 +162,7 @@ class Game:
     # ── goal and ending ─────────────────────────────────────────────────────
     def _check_goal(self, world: World) -> None:
         goal = self.adventure.data.get("goal")
-        if not goal or self.state.phase == "over" or self.state.scene != self.adventure.home:
+        if not goal or self.state.phase == "over" or not world.in_village:
             return
         carried = {i.id.split("-")[0] for i in world.party_items()} | {i.id for i in world.party_items()}
         have = [g for g in goal.get("items", []) if g in carried]
@@ -183,6 +198,7 @@ class Game:
             "ok": not errors,
             "handled": handled,
             "leader": leader.name if leader else None,
+            "available_actions": world.available_actions() if self.state.phase != "over" else [],
             "events": world.events,
             "errors": errors,
             "summary": "\n".join(lines),
@@ -222,6 +238,8 @@ class Game:
             })
         context = {
             "adventure": self.adventure.title,
+            "village": self.state.village,
+            "available_actions": world.available_actions(),
             "phase": self.state.phase,
             "outcome": self.state.outcome,
             "clock": clock_text(self.state.clock),
@@ -232,8 +250,8 @@ class Game:
             "facts": self.state.facts,
             "pending_confirmation": (self.state.pending or {}).get("message"),
         }
-        deadline = self.adventure.data.get("deadline")
-        if deadline:
+        deadline = world.deadline_at()
+        if deadline is not None:
             context["time_left"] = f"about {max(0, deadline - self.state.clock) // 60} hours"
         if self.state.combat:
             context["combat"] = {

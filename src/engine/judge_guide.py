@@ -16,6 +16,13 @@ EACH TURN
 4. Narrate ONLY what the result reports. If it asks for confirmation, ask the
    player plainly and send their answer to `command`.
 
+THE VILLAGE AND THE TAVERN
+- Every game begins in the village tavern. When a result or the context has
+  "available_actions", end your narration by stating those actions clearly,
+  as a short list, and offer nothing else as a choice.
+- "glean rumors" reveals the adventure's hook first, then further rumors.
+  The road out of the village opens once the hook is known.
+
 INVENTORY AND STATUS
 - For inventory, call the `inventory` tool and show its list exactly; for
   status, show the result's summary as is. Never narrate or invent what a
@@ -61,6 +68,7 @@ ACTION TYPES (free = no game time)
   repair {target}            10 min quick repair: one more use, then gone
   interact {target, interaction}   an authored action listed on an object
   wait                       10 min
+  glean                      30 min, tavern only: rumors; the hook comes first
   improvise {...}            see below
   attack {target, actor?, all?} | defend {actor?} | flee {target: exit}
 

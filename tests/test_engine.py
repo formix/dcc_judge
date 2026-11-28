@@ -27,13 +27,14 @@ def test_new_game_party_and_save_round_trip(new_game, tmp_path):
     for c in game.state.characters:
         assert 1 <= c.hp == c.max_hp
         assert c.augur["name"]
-    loaded = Game.load("elders_secret", store=game.store, log_dir=None)
+    loaded = Game.load(store=game.store, log_dir=None)
     assert loaded.state.to_dict() == game.state.to_dict()
 
 
 def test_first_torch_lights_free_and_burns(new_game):
     game = new_game()
     no_encounters(game)
+    teleport(game, "outside")
     clear_hands(game)
     give(game, 0, "Torch", 2)
     give(game, 0, "Flint & steel")
@@ -154,6 +155,7 @@ def test_trap_douses_light(new_game):
 def test_combat_runs_to_an_end(new_game):
     game = new_game(11)
     no_encounters(game)
+    teleport(game, "outside")
     clear_hands(game, 0)
     give(game, 0, "Torch", 2)
     give(game, 0, "Flint & steel")
@@ -232,6 +234,9 @@ def test_context_hides_undiscovered_things(new_game):
 def test_shop_buy_and_haggle(new_game):
     game = new_game()
     total = sum(c.cp for c in game.state.characters)
+    assert not game.command("buy 2 torches")["ok"]          # no shop in the tavern
+    assert game.command("visit the shopkeeper")["ok"]
+    assert game.state.scene == "village_shop"
     assert game.command("buy 2 torches")["ok"]
     assert sum(c.cp for c in game.state.characters) == total - 2
 

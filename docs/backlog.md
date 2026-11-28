@@ -1,7 +1,7 @@
 # Backlog
 
 Work saved for later implementation, after the first engine version. Rules are
-in `design.md`; story and adventure rules in `adventure-E01.md`; what the
+in `design.md`; story and adventure rules in `adventure-F01.md`; what the
 engine does today in `engine-notes.md`.
 
 ## Engine
@@ -21,16 +21,20 @@ engine does today in `engine-notes.md`.
 
 ## Village (milestone 2)
 
-- [ ] Travel between the village and the dungeon: 3 hours each way, counted
-      toward the deadline, no torch time or encounters.
+- [x] Travel between the village and the dungeon: 3 hours each way, counted
+      toward the deadline, no torch time or encounters. Done with design 13.
 - [ ] Village rest: 8 hours, 1 HP each, once per run. Design 9.5.
+- [ ] Offer several hooks in the tavern when the adventures directory holds more
+      than one suitable adventure, and let the party choose. Design 13.
 - [ ] Village volunteers: four 0-level replacements per run, filling empty
       slots only. Design 8.1a.
-- [ ] Move the shop from the dungeon entrance to the village.
+- [x] Move the shop from the dungeon entrance to the village. Done with design 13.
+- [ ] The elder's gift: Wren meets the party with a marked pack as they first
+      leave the village. Adventure section 5.2.
 - [ ] The priest, the elder and Wren; the trial with its plea; the four endings
       and the village alignment. Adventure sections 5 and 14.
 
-## Adventure rules (design 14.1, adventure section 16)
+## Adventure rules (design 15.1, adventure section 16)
 
 - [ ] `owed`: names as debts, the mark, collection at the ending or hour 24,
       redemption, release when the Child's Flame ends.
@@ -50,16 +54,16 @@ engine does today in `engine-notes.md`.
 - [ ] `garr_betrayal`: Garr's thieving and his betrayal in the village.
 - [ ] `ending_order`: the resolution order in adventure section 14.4.
 - [ ] Engine support for adventure rules in general: activation, saving, and
-      removal at the end of the game unless a rule persists. Design 14.1.
+      removal at the end of the game unless a rule persists. Design 15.1.
 
 ## People
 
 - [ ] Companions who take no party slot, with their own harm rules (Maud).
-      Design 14.
+      Design 15.
 - [ ] Named recruits with ability overrides and triggered behaviour (Tobin,
-      Garr). Design 14.
+      Garr). Design 15.
 - [ ] Dungeon replacements filling empty slots. Design 8.1.
 - [ ] Conversations with characters, with per-speaker facts they know and will
-      say. Design 14 and adventure section 13.
+      say. Design 15 and adventure section 13.
 - [ ] Restore the full evidence goal: any two of Maud, the satchel and the
       tablet. Adventure section 10.

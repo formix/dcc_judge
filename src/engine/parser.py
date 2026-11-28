@@ -22,6 +22,8 @@ SIMPLE: list[tuple[str, str]] = [
     (r"^(?:defend|guard|parry|hold)$", "defend"),
     (r"^(?:search|search around|search the room|search here)$", "search"),
     (r"^(?:fight on|continue|next round|keep fighting)$", "defend_keep"),
+    (r"^(?:glean|glean rumou?rs|gather rumou?rs|listen for rumou?rs|ask (?:about|for) rumou?rs|rumou?rs|"
+     r"listen to the talk|listen to gossip|ask around)$", "glean"),
 ]
 
 PATTERNS: list[tuple[str, str, tuple[str, ...]]] = [
@@ -33,7 +35,7 @@ PATTERNS: list[tuple[str, str, tuple[str, ...]]] = [
     (r"^(?:follow) (.+)$", "leader", ("target",)),
     (r"^(.+?) (?:leads|takes the lead|leads the way)$", "leader", ("target",)),
     (r"^(?:sneak|creep|tiptoe|quietly go|quietly move|sneak through|sneak to|sneak into|sneak down|sneak up|move quietly to|move quietly through) (.+)$", "move_silent", ("target",)),
-    (r"^(?:go|walk|move|enter|climb|head|descend|ascend|take the|go through|go down|go up|go into|go to|crawl|crawl into|crawl through|slide down|ride|jump into) (.+)$", "move", ("target",)),
+    (r"^(?:go|walk|move|enter|climb|head|descend|ascend|take the|go through|go down|go up|go into|go to|crawl|crawl into|crawl through|slide down|ride|jump into|visit|visit the|return to|go back to) (.+)$", "move", ("target",)),
     (r"^(?:search|search the|search in|look in|look behind|look under) (.+)$", "search", ("target",)),
     (r"^(?:take|get|grab|pick up|pick) (.+)$", "take", ("target",)),
     (r"^(?:drop|leave|put down) (.+)$", "drop", ("target",)),
