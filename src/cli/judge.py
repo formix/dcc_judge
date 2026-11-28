@@ -170,6 +170,14 @@ def show_actions(actions: list[dict] | None) -> None:
                       "  ".join(f"[cyan]•[/cyan] {escape(a['label'])}" for a in actions) + "\n")
 
 
+def show_purse(purse: dict | None) -> None:
+    """In a shop: each character's remaining money, and the party's total."""
+    if purse:
+        people = "  ".join(f"[yellow]•[/yellow] {escape(c['name'])}{' (leader)' if c['leader'] else ''} "
+                           f"{c['text']}" for c in purse["characters"])
+        console.print(f"[bold yellow]Money:[/bold yellow] {people}  [dim](party total {purse['party_text']})[/dim]\n")
+
+
 def show_rolls(result: dict) -> None:
     for e in result.get("events", []):
         if e.get("kind") in ("check",):
@@ -201,6 +209,7 @@ class Session:
     def narrate(self, result: dict) -> None:
         self._narrate(result)
         show_actions(result.get("available_actions"))
+        show_purse(result.get("purse"))
 
     def _narrate(self, result: dict) -> None:
         show_rolls(result)

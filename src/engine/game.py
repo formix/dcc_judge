@@ -199,6 +199,7 @@ class Game:
             "handled": handled,
             "leader": leader.name if leader else None,
             "available_actions": world.available_actions() if self.state.phase != "over" else [],
+            **({"purse": world.purse_view()} if world.scene.get("shop") else {}),
             "events": world.events,
             "errors": errors,
             "summary": "\n".join(lines),

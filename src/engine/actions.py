@@ -349,10 +349,16 @@ class Actions:
         self.world.note(f"{char.name} took the {item.label('light')}.")
 
     def _held_item(self, text: str | None, char: Character | None = None) -> tuple[Item, Character]:
+        """An item the party carries; with `char`, it must be that character's own."""
+        if char is not None:
+            own = self.world.char_items(char.id)
+            found = resolve_name(text or "", [(i.id, [i.label()]) for i in own])
+            if found is not None:
+                return self.state.items[found], char
         item = self.find_thing(text or "", scene=False)
         holder = self.world.holder(item.id)
         if char and holder and holder.id != char.id:
-            raise ActionError(f"{holder.name} has the {item.label()}, not {char.name}.")
+            raise ActionError(f"{char.name} does not have the {item.label()}; {holder.name} does.")
         return item, holder
 
     def do_drop(self, action):
@@ -951,17 +957,22 @@ class Actions:
             raise ActionError("There is no one to trade with here.")
         return shop
 
-    def _pay(self, char: Character, price: int) -> None:
-        """Pay from the buyer's purse, then from the others' (pooled savings)."""
+    def _pay(self, char: Character, price: int) -> list[tuple[Character, int]]:
+        """Pay from the buyer's purse, then from the others' (pooled savings, design 8.2).
+        Returns who paid how much."""
         payers = [char] + [c for c in self.state.living() if c.id != char.id]
         if sum(c.cp for c in payers) < price:
             raise ActionError(f"The party cannot afford that ({price} cp).")
+        paid = []
         for c in payers:
             share = min(c.cp, price)
-            c.cp -= share
-            price -= share
+            if share:
+                c.cp -= share
+                price -= share
+                paid.append((c, share))
             if price == 0:
-                return
+                break
+        return paid
 
     def do_buy(self, action):
         from engine.catalog import make_item
@@ -985,14 +996,17 @@ class Actions:
         price = item.cost_cp * qty
         if not self.world.can_carry(char, item):
             raise ActionError(f"{char.name} has no room for that.")
-        self._pay(char, price)
+        paid = self._pay(char, price)
         self.state.flags[f"_sold:{name}"] = sold + qty
         self.world.add_item(item, {"char": char.id, "slot": "pack"})
-        self.world.emit("buy", f"{char.name} buys {qty} {name} for {price} cp.")
+        helpers = [f"{c.name} adds {share} cp" for c, share in paid if c.id != char.id]
+        self.world.emit("buy", f"{char.name} buys {qty} {name} for {price} cp"
+                        + (f" ({'; '.join(helpers)})." if helpers else "."))
 
     def do_sell(self, action):
+        """The named character sells one of their own items; the leader if no one is named."""
         self._shop()
-        item, holder = self._held_item(action.get("target") or action.get("item"))
+        item, holder = self._held_item(action.get("target") or action.get("item"), self.actor(action))
         goal = self.world.adventure.data.get("goal", {}).get("items", [])
         if item.id.split("-")[0] in goal or item.rules.get("magic") or item.broken:
             raise ActionError(f"The shopkeeper will not take the {item.label()}.")

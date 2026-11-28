@@ -77,3 +77,46 @@ def test_funnel_flag_must_match_the_f_number():
 def test_every_adventure_needs_a_hook():
     with pytest.raises(AdventureError, match="hook"):
         with_village({"id": "x", "scenes": [], "transitions": []})
+
+
+def test_the_shop_shows_each_characters_money(new_game):
+    from engine.world import money_text
+    assert money_text(1234) == "12 gp 3 sp 4 cp" and money_text(0) == "0 cp" and money_text(40) == "4 sp"
+    game = new_game()
+    assert "purse" not in game.command("look")                      # not in the tavern
+    for char, cp in zip(game.state.characters, (39, 5, 0, 120)):
+        char.cp = cp
+    result = game.command("visit the shopkeeper")
+    purse = result["purse"]
+    assert [(c["name"], c["cp"]) for c in purse["characters"]] == [(c.name, c.cp) for c in game.state.characters]
+    assert purse["party_cp"] == 164 and purse["characters"][0]["leader"]
+    assert f"{game.state.characters[0].name} 3 sp 9 cp" in result["summary"]
+    after = game.command("buy 3 torches")
+    assert after["purse"]["characters"][0]["text"] == "3 sp 6 cp"
+
+
+def test_shop_actions_use_the_named_character_or_the_leader(new_game):
+    from engine.catalog import make_item
+    game = new_game()
+    game.command("visit the shopkeeper")
+    leader, gilda, pim = game.state.characters[0], game.state.characters[1], game.state.characters[2]
+    leader.cp, gilda.cp, pim.cp = 50, 3, 0
+    world = game.world()
+    # default: the leader buys and carries it
+    assert game.command("buy 2 torches")["ok"]
+    assert leader.cp == 48 and any(i.label() == "Torch" for i in world.char_items(leader.id))
+    # named: that character buys; the others chip in when they run short
+    result = game.command(f"{gilda.name.lower()} buy 5 torches")
+    assert result["ok"] and gilda.cp == 0 and leader.cp == 46
+    assert f"{gilda.name} buys 5 Torch for 5 cp ({leader.name} adds 2 cp)." in result["summary"]
+    assert any(i.label() == "Torch" and i.quantity == 5 for i in world.char_items(gilda.id))
+    # named seller and haggler: their own item, their own Personality, their purse
+    world.add_item(make_item("Rope"), {"char": pim.id, "slot": "pack"})
+    haggle = game.command(f"{pim.name.lower()} haggle rope")
+    assert haggle["needs_confirmation"] and f"Haggling: {pim.name}" in haggle["summary"]
+    sold = game.command("yes")
+    assert sold["ok"] and pim.cp > 0 and not any(i.label() == "Rope" for i in world.char_items(pim.id))
+    # the leader cannot sell what someone else carries
+    world.add_item(make_item("Chalk"), {"char": pim.id, "slot": "pack"})
+    refused = game.command("sell chalk")
+    assert not refused["ok"] and f"{leader.name} does not have the Chalk; {pim.name} does." in refused["errors"][0]

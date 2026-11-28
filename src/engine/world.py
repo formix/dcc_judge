@@ -20,6 +20,14 @@ from rulesets.dcc import RECOVER_BODY_WINDOW_MINUTES
 from rulesets.game import RULES, light_stage, material
 
 
+def money_text(cp: int) -> str:
+    """Copper pieces as gold, silver and copper: 1 gp = 100 cp, 1 sp = 10 cp."""
+    gp, rest = divmod(max(0, cp), 100)
+    sp, cp_left = divmod(rest, 10)
+    parts = [f"{n} {unit}" for n, unit in ((gp, "gp"), (sp, "sp"), (cp_left, "cp")) if n]
+    return " ".join(parts) or "0 cp"
+
+
 def label_text(value, mode: str) -> str | None:
     """Labels and names: a plain string is used in every perception mode."""
     if isinstance(value, str):
@@ -690,6 +698,14 @@ class World:
             **({"available_actions": self.available_actions()} if self.scene.get("menu") else {}),
         }
 
+    def purse_view(self) -> dict[str, Any]:
+        """Each character's remaining money, and the party's total, which purchases may draw on."""
+        chars = self.state.living()
+        party = sum(c.cp for c in chars)
+        return {"characters": [{"name": c.name, "leader": c.id == self.state.leader, "cp": c.cp,
+                                "text": money_text(c.cp)} for c in chars],
+                "party_cp": party, "party_text": money_text(party)}
+
     def shop_view(self) -> dict[str, Any]:
         """What the shop here sells, with prices in copper pieces."""
         from engine.catalog import make_item
@@ -698,7 +714,8 @@ class World:
         for custom in shop.get("custom", []):
             name = custom["name"]["light"] if isinstance(custom["name"], dict) else custom["name"]
             prices[name] = custom.get("cost_cp", 0)
-        return {"sells": prices, "buys": "anything ordinary, at half its cost (haggling can change that)"}
+        return {"sells": prices, "buys": "anything ordinary, at half its cost (haggling can change that)",
+                "purse": self.purse_view()}
 
     def render_scene(self, view: dict[str, Any] | None = None) -> str:
         view = view or self.scene_view()
@@ -718,6 +735,9 @@ class World:
         if view.get("available_actions"):
             lines.append("You can: " + "; ".join(a["label"] for a in view["available_actions"]) + ".")
         if view.get("shop"):
+            purse = view["shop"]["purse"]
+            lines.append("Money: " + "; ".join(f"{c['name']} {c['text']}" for c in purse["characters"])
+                         + f" (party total {purse['party_text']}).")
             lines.append("A trader here sells: " + ", ".join(f"{k} ({v} cp)" for k, v in view["shop"]["sells"].items()) + ".")
         if view["history"]:
             lines.append("Earlier here: " + " ".join(view["history"][-3:]))
