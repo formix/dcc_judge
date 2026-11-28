@@ -105,6 +105,50 @@ def show(text: str, title: str = "⚖  THE JUDGE  ⚖", style: str = "red") -> N
                             border_style=style, padding=(1, 2)))
 
 
+DISPLAY_ONLY = {"inventory", "status"}
+
+
+def show_inventory(views: list[dict]) -> None:
+    """The engine's inventory as a list, one panel per character."""
+    for v in views:
+        eq = v["equipment"]
+        lines = []
+        for n, hand in enumerate(eq["hands"], 1):
+            lines.append(f"[bold]Hand {n}:[/bold] {_item(hand)}")
+        lines.append(f"[bold]Body:[/bold]   {_item(eq['body'])}")
+        lines.append(f"[bold]Head:[/bold]   {_item(eq['head'])}")
+        slots = v["slots"]
+        lines.append(f"\n[bold]Pack[/bold] [dim]({slots['used']}/{slots['total']} slots used, "
+                     f"[/dim][bold {'green' if slots['free'] > 0 else 'red'}]{slots['free']} free[/bold "
+                     f"{'green' if slots['free'] > 0 else 'red'}][dim])[/dim]")
+        for item in v["pack"]:
+            lines.append(f"  • {_item(item)} [dim]({item['slots']} slot{'s' if item['slots'] != 1 else ''})[/dim]")
+        coins = v["coins"]
+        lines.append(f"  • {coins['cp']} cp [dim]({coins['slots']} slot{'s' if coins['slots'] != 1 else ''})[/dim]")
+        title = f"{v['name']}{' (leader)' if v['leader'] else ''} · AC {v['ac']}"
+        console.print(Panel("\n".join(lines), title=f"[bold cyan]{title}[/bold cyan]", border_style="cyan",
+                            padding=(0, 2)))
+
+
+def _item(entry: dict | None) -> str:
+    if not entry:
+        return "[dim]empty[/dim]"
+    if "same_as" in entry:
+        return f"[dim]{entry['name']}[/dim]"
+    text = entry["name"] + (f" x{entry['quantity']}" if entry.get("quantity", 1) > 1 else "")
+    if entry.get("damage"):
+        text += f" [dim]{entry['damage']}[/dim]"
+    if "ac" in entry:
+        text += f" [dim]AC +{entry['ac']}[/dim]"
+    if entry.get("lit"):
+        text += f" [yellow](lit, {entry.get('light')})[/yellow]"
+    if entry.get("broken"):
+        text += " [red](broken)[/red]"
+    if entry.get("patched"):
+        text += " [yellow](patched)[/yellow]"
+    return text
+
+
 def show_rolls(result: dict) -> None:
     for e in result.get("events", []):
         if e.get("kind") in ("check",):
@@ -139,6 +183,20 @@ class Session:
             show(result["clarify"])
             return
         summary = result.get("summary", "")
+        events = result.get("events", [])
+        inventories = [e["inventory"] for e in events if e.get("kind") == "inventory" and e.get("inventory")]
+        if inventories:
+            show_inventory(inventories)
+        others = [e for e in events if e.get("kind") not in DISPLAY_ONLY]
+        statuses = [e["text"] for e in events if e.get("kind") == "status"]
+        if statuses:
+            show("\n".join(statuses), title="STATUS", style="cyan")
+        if events and not others and not result.get("errors"):
+            return  # facts about the party: shown as they are, never narrated
+        if inventories or statuses:
+            result = {**result, "summary": "\n".join(e["text"] for e in others) +
+                      ("\n" + "\n".join(result["errors"]) if result.get("errors") else "")}
+            summary = result["summary"]
         if self.judge and result.get("ok", True) and summary:
             try:
                 show(self.judge.narrate(result))

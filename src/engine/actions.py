@@ -282,15 +282,8 @@ class Actions:
     def do_inventory(self, action):
         chars = [self.actor(action)] if action.get("actor") else self.state.living()
         for c in chars:
-            parts = []
-            for slot in ("hands", "worn", "pack"):
-                items = [f"{i.label()}{' x' + str(i.quantity) if i.quantity > 1 else ''}"
-                         f"{' (lit)' if i.state.get('lit') else ''}{' (broken)' if i.broken else ''}"
-                         for i in self.world.char_items(c.id, slot)]
-                if items:
-                    parts.append(f"{slot}: {', '.join(items)}")
-            parts.append(f"{c.cp} cp; slots {self.world.slots_used(c)}/{RULES['carry']['slots']}")
-            self.world.emit("inventory", f"{c.name} — " + "; ".join(parts))
+            view = self.world.inventory_view(c)
+            self.world.emit("inventory", inventory_text(view), inventory=view)
 
     def do_status(self, action):
         lines = []
@@ -1181,6 +1174,28 @@ class Actions:
             ids = [self.world.spawn_group(group, self.state.scene)["id"]]
         if ids and self.state.phase == "exploration":
             combat.start(self.world, ids)
+
+
+def _item_text(entry: dict) -> str:
+    text = entry["name"] + (f" x{entry['quantity']}" if entry.get("quantity", 1) > 1 else "")
+    notes = [n for n, on in (("lit, " + entry.get("light", ""), entry.get("lit")), ("broken", entry.get("broken")),
+                             ("patched", entry.get("patched"))) if on]
+    return text + (f" ({'; '.join(notes)})" if notes else "")
+
+
+def inventory_text(view: dict) -> str:
+    """Plain list of a character's belongings, from World.inventory_view."""
+    eq = view["equipment"]
+    lines = [f"{view['name']}{' (leader)' if view['leader'] else ''}"]
+    for n, hand in enumerate(eq["hands"], 1):
+        lines.append(f"  Hand {n}: {_item_text(hand) if hand and 'same_as' not in hand else (hand['name'] if hand else '-')}")
+    lines.append(f"  Body: {_item_text(eq['body']) if eq['body'] else '-'}")
+    lines.append(f"  Head: {_item_text(eq['head']) if eq['head'] else '-'}")
+    lines.append(f"  Pack ({view['slots']['used']}/{view['slots']['total']} slots, {view['slots']['free']} free):")
+    for item in view["pack"]:
+        lines.append(f"    - {_item_text(item)} [{item['slots']} slot{'s' if item['slots'] != 1 else ''}]")
+    lines.append(f"    - {view['coins']['cp']} cp [{view['coins']['slots']} slot{'s' if view['coins']['slots'] != 1 else ''}]")
+    return "\n".join(lines)
 
 
 def clock_text(minutes: int) -> str:

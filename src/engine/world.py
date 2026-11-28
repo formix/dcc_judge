@@ -348,6 +348,49 @@ class World:
                     if "armor" in i.rules and self.location(i.id).get("slot") in ("worn", "hands"))
         return 10 + char.mod("Agility") + armor + char.augur_bonus("ac") + char.condition_modifier("ac", self.now)
 
+    def inventory_view(self, char: Character) -> dict[str, Any]:
+        """A character's actual belongings: equipment slots, pack and free space."""
+        def entry(item: Item) -> dict[str, Any]:
+            out: dict[str, Any] = {"id": item.id, "name": item.label(), "quantity": item.quantity,
+                                   "slots": self.slot_cost(item)}
+            if item.state.get("lit"):
+                out["lit"] = True
+                out["light"] = light_stage(item.state.get("remaining", 0))
+            if item.broken:
+                out["broken"] = True
+            if item.state.get("patched"):
+                out["patched"] = True
+            if "weapon" in item.rules:
+                out["damage"] = item.rules["weapon"].get("damage")
+            if "armor" in item.rules:
+                out["ac"] = item.rules["armor"].get("ac", 0)
+            return out
+
+        hands: list[dict[str, Any] | None] = []
+        for item in self.char_items(char.id, "hands"):
+            hands.append(entry(item))
+            if item.rules.get("weapon", {}).get("two_handed"):
+                hands.append({"name": f"({item.label()}, two-handed)", "same_as": item.id})
+        hands += [None] * (RULES["carry"]["hands"] - len(hands))
+        worn: dict[str, dict[str, Any] | None] = {"body": None, "head": None}
+        for item in self.char_items(char.id, "worn"):
+            worn[item.rules.get("armor", {}).get("slot", "body")] = entry(item)
+        coin_slots = math.ceil(char.cp / RULES["carry"]["coins_per_slot"]) if char.cp else 0
+        used = self.slots_used(char)
+        return {
+            "id": char.id,
+            "name": char.name,
+            "leader": char.id == self.state.leader,
+            "status": char.status,
+            "equipment": {"hands": hands, **worn},
+            "pack": [entry(i) for i in self.char_items(char.id, "pack")],
+            "coins": {"cp": char.cp, "slots": coin_slots},
+            "slots": {"used": used, "total": RULES["carry"]["slots"],
+                      "free": RULES["carry"]["slots"] - used},
+            "free_hands": self.free_hands(char),
+            "ac": self.ac(char),
+        }
+
     def weapon_of(self, char: Character) -> Item | None:
         return next((i for i in self.char_items(char.id, "hands") if "weapon" in i.rules), None)
 

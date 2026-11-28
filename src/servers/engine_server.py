@@ -135,6 +135,15 @@ def customize_character(character: str, name: str = "", gender: str = "", alignm
 
 
 @mcp.tool()
+def inventory(character: str = "") -> str:
+    """The actual inventory of the party, or of one character: equipment slots
+    (two hands, body, head), the pack with the slots each item takes, coins,
+    and used and free carrying slots. Show it to the player as a list, as is;
+    do not narrate or rewrite it. No game time passes."""
+    return _dump(_need_game().inventory(character or None))
+
+
+@mcp.tool()
 def character_sheet(character: str) -> str:
     """A full character sheet, including birth augur and ability scores."""
     game = _need_game()

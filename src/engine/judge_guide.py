@@ -16,6 +16,11 @@ EACH TURN
 4. Narrate ONLY what the result reports. If it asks for confirmation, ask the
    player plainly and send their answer to `command`.
 
+INVENTORY AND STATUS
+- For inventory, call the `inventory` tool and show its list exactly; for
+  status, show the result's summary as is. Never narrate or invent what a
+  character carries or how they are.
+
 NARRATION RULES
 - Use only the result's events and the context. Never mention exits, objects,
   creatures or secrets that are not in them.

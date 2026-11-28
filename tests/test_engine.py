@@ -253,3 +253,25 @@ def test_first_character_leads_and_leader_can_change(new_game):
         assert result["handled"] and result["ok"], (text, result)
     assert game.state.leader == second.id
     assert game.command("look")["leader"] == second.name
+
+
+def test_inventory_lists_equipment_slots_and_free_space(new_game):
+    game = new_game()
+    char = game.state.characters[0]
+    clear_hands(game)
+    give(game, 0, "Torch", 3)
+    give(game, 0, "Shortbow", slot="hands")
+    result = game.inventory(char.name)
+    view = result["inventory"][0]
+    assert result["display_only"] and view["name"] == char.name
+    assert set(view["equipment"]) == {"hands", "body", "head"}
+    assert len(view["equipment"]["hands"]) == 2 and view["free_hands"] == 0   # bow is two-handed
+    torches = next(i for i in view["pack"] if i["name"] == "Torch")
+    assert torches["quantity"] == 3 and torches["slots"] == 2               # two torches per slot
+    assert view["slots"]["used"] + view["slots"]["free"] == view["slots"]["total"] == 10
+    assert view["slots"]["used"] == sum(i["slots"] for i in view["pack"]) + view["coins"]["slots"]
+    whole_party = game.inventory()["inventory"]
+    assert len(whole_party) == 4
+    # the parser path returns the same data on its event
+    event = game.command(f"inventory {char.name.lower()}")["events"][0]
+    assert event["kind"] == "inventory" and event["inventory"]["slots"] == view["slots"]

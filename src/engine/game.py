@@ -244,6 +244,18 @@ class Game:
             }
         return context
 
+    def inventory(self, character: str | None = None) -> dict[str, Any]:
+        """The party's actual belongings, or one character's. No game time passes."""
+        world = self.world()
+        if character:
+            char = world.find_character(character)
+            if char is None:
+                return {"ok": False, "errors": [f"No character '{character}'."]}
+            chars = [char]
+        else:
+            chars = self.state.living()
+        return {"ok": True, "display_only": True, "inventory": [world.inventory_view(c) for c in chars]}
+
     # ── party set-up ────────────────────────────────────────────────────────
     def customize(self, character: str, name: str | None = None, gender: str | None = None,
                   alignment: str | None = None) -> dict[str, Any]:

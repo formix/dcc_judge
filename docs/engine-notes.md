@@ -35,7 +35,7 @@ engine validates and resolves it and returns events and a plain summary, which
 the Judge narrates. This is design 3.2 carried over MCP.
 
 **MCP tools:** `list_adventures`, `adventure_info`, `new_game`, `resume_game`, `reset_game`, `get_context`,
-`command`, `act`, `customize_character`, `character_sheet`, `encounter_level`,
+`command`, `act`, `inventory`, `customize_character`, `character_sheet`, `encounter_level`,
 `judge_guide`, and a `judge` prompt.
 
 **Running it:**

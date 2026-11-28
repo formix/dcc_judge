@@ -77,7 +77,7 @@ python src/servers/engine_server.py
 ```
 
 `new_game`, `resume_game`, `reset_game` and `adventure_info` take the adventure as a file
-path or an http(s) URL. Tools: `new_game`, `resume_game`, `reset_game`, `get_context`, `command`, `act`,
+path or an http(s) URL. Tools: `new_game`, `resume_game`, `reset_game`, `get_context`, `command`, `act`, `inventory`,
 `customize_character`, `character_sheet`, `list_adventures`,
 `encounter_level`, `judge_guide`. The `judge` prompt and `judge_guide` tool
 explain the turn loop and the proposal format.

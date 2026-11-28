@@ -37,6 +37,9 @@ def test_engine_server_over_stdio(tmp_path):
                 assert unknown["handled"] is False
                 acted = await call("act", proposal=json.dumps({"actions": [{"type": "look"}]}))
                 assert acted["ok"]
+                inv = await call("inventory")
+                assert inv["display_only"] and len(inv["inventory"]) == 4
+                assert {"hands", "body", "head"} == set(inv["inventory"][0]["equipment"])
                 assert (await call("adventure_info", adventure=info["source"]))["saved_game"]
                 reset = await call("reset_game", adventure=info["source"])
                 assert reset["ok"] and reset["deleted_save"]
