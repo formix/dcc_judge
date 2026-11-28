@@ -18,7 +18,7 @@ if _src_dir not in sys.path:
 
 from mcp.server.mcpserver import MCPServer  # noqa: E402
 
-from engine.adventure import AdventureError, list_adventures as _list_adventures  # noqa: E402
+from engine.adventure import AdventureError, list_adventures as _list_adventures, load_adventure  # noqa: E402
 from engine.encounters import apply_level_events  # noqa: E402
 from engine.game import Game  # noqa: E402
 from engine.judge_guide import JUDGE_GUIDE  # noqa: E402
@@ -40,15 +40,30 @@ def _need_game() -> Game:
 
 @mcp.tool()
 def list_adventures() -> str:
-    """List the adventures available, and whether each has a saved game."""
+    """List the adventures bundled with the engine (id and file path), and
+    whether each has a saved game."""
     store = SaveStore()
-    return _dump([{"id": a, "saved_game": store.exists(a)} for a in _list_adventures()])
+    return _dump([{**a, "saved_game": store.exists(a["id"])} for a in _list_adventures()])
 
 
 @mcp.tool()
-def new_game(adventure: str = "elders_secret", seed: int | None = None) -> str:
-    """Start a new game (overwrites that adventure's save). Returns the opening
-    result and the context. A party of four 0-level characters is rolled."""
+def adventure_info(adventure: str) -> str:
+    """Load and check an adventure from a file path or http(s) URL (or a bundled
+    id). Returns its id, title, warnings and whether it has a saved game."""
+    try:
+        adv = load_adventure(adventure)
+    except AdventureError as exc:
+        return _dump({"ok": False, "errors": [str(exc)]})
+    _, warnings = adv.validate()
+    return _dump({"ok": True, "id": adv.id, "title": adv.title, "source": adv.source,
+                  "warnings": warnings, "saved_game": SaveStore().exists(adv.id)})
+
+
+@mcp.tool()
+def new_game(adventure: str, seed: int | None = None) -> str:
+    """Start a new game from an adventure file path or http(s) URL (or a bundled
+    id). Overwrites that adventure's save. Returns the opening result and the
+    context. A party of four 0-level characters is rolled."""
     global _game
     try:
         _game, result = Game.new(adventure, seed=seed)
@@ -58,11 +73,16 @@ def new_game(adventure: str = "elders_secret", seed: int | None = None) -> str:
 
 
 @mcp.tool()
-def resume_game(adventure: str = "elders_secret") -> str:
-    """Load the saved game for an adventure and return the context."""
+def resume_game(adventure: str) -> str:
+    """Resume the saved game of an adventure, given by file path or http(s) URL
+    (or a bundled id). Returns the context."""
     global _game
-    if not SaveStore().exists(adventure):
-        return _dump({"ok": False, "errors": [f"No saved game for '{adventure}'."]})
+    try:
+        adv = load_adventure(adventure)
+    except AdventureError as exc:
+        return _dump({"ok": False, "errors": [str(exc)]})
+    if not SaveStore().exists(adv.id):
+        return _dump({"ok": False, "errors": [f"No saved game for '{adv.id}'."]})
     _game = Game.load(adventure)
     return _dump({"ok": True, "context": _game.context()})
 

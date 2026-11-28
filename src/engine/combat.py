@@ -82,7 +82,12 @@ def _has_cond(world, who: str, name: str) -> bool:
 
 
 def _member_name(world, member: dict) -> str:
-    return member["name"] if world.mode != "touch" else "something"
+    """'Nib the goblin sentry' for named creatures, so narrators read names as names."""
+    if world.mode == "touch":
+        return "something"
+    kind = world.creature(member).get("name", member["creature"])
+    name = member["name"]
+    return name if name.lower().startswith(kind.lower()) or name == kind else f"{name} the {kind}"
 
 
 # ── start ───────────────────────────────────────────────────────────────────

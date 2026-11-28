@@ -8,10 +8,14 @@ Starts the engine as an MCP server over stdio and plays as the Judge:
 - results are narrated by the model, or printed plainly without one.
 
 Usage:
-    python src/cli/judge.py                     # parser only, no model
-    python src/cli/judge.py --model qwen3.5:4b  # with a local Ollama model
-    python src/cli/judge.py --model llama3.1 --host http://server:11434
-    python src/cli/judge.py --new --seed 7      # start over with a fixed seed
+    python src/cli/judge.py ADVENTURE [options]
+
+    ADVENTURE is the adventure file: a path or an http(s) URL.
+
+    python src/cli/judge.py adventures/elders_secret/adventure.yaml
+    python src/cli/judge.py adventures/elders_secret/adventure.yaml --model gemma4-12b-128k:latest
+    python src/cli/judge.py https://example.com/my_adventure.yaml --model llama3.1 --host http://server:11434
+    python src/cli/judge.py adventures/elders_secret/adventure.yaml --new --seed 7
 """
 
 from __future__ import annotations
@@ -188,17 +192,22 @@ async def run(args) -> None:
         async with ClientSession(r, w) as mcp:
             await mcp.initialize()
             session = Session(mcp, judge)
-            saves = {a["id"]: a["saved_game"] for a in await session.call("list_adventures")}
-            if args.adventure not in saves:
-                console.print(f"[red]Unknown adventure {args.adventure}. Available: {', '.join(saves)}[/red]")
+            source = args.adventure if re.match(r"^https?://", args.adventure, re.I) else \
+                os.path.abspath(os.path.expanduser(args.adventure))
+            info = await session.call("adventure_info", adventure=source)
+            if not info.get("ok"):
+                console.print(f"[red]{chr(10).join(info.get('errors', []))}[/red]")
                 return
-            if saves[args.adventure] and not args.new:
-                result = await session.call("resume_game", adventure=args.adventure)
+            console.print(f"[bold]{info['title']}[/bold] [dim]({info['source']})[/dim]")
+            for warning in info.get("warnings", []):
+                console.print(f"[yellow]Adventure warning: {warning}[/yellow]")
+            if info["saved_game"] and not args.new:
+                result = await session.call("resume_game", adventure=source)
                 console.print("[dim]Resuming your saved game.[/dim]")
                 session.narrate({"summary": (await session.call("command", text="look"))["summary"],
                                  "perception": result["context"]["scene"]["perception"], "ok": True})
             else:
-                result = await session.call("new_game", adventure=args.adventure, seed=args.seed)
+                result = await session.call("new_game", adventure=source, seed=args.seed)
                 if not result.get("ok", True) and result.get("errors"):
                     console.print(f"[red]{result['errors']}[/red]")
                     return
@@ -226,9 +235,9 @@ async def run(args) -> None:
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="DCC Judge console client")
+    parser.add_argument("adventure", help="adventure file: a path or an http(s) URL")
     parser.add_argument("--model", help="Ollama model for the Judge (omit for plain commands only)")
     parser.add_argument("--host", help="Ollama host, e.g. http://localhost:11434 or a remote server")
-    parser.add_argument("--adventure", default="elders_secret")
     parser.add_argument("--new", action="store_true", help="start a new game, replacing the save")
     parser.add_argument("--seed", type=int, help="dice seed for a new game")
     asyncio.run(run(parser.parse_args()))

@@ -20,7 +20,7 @@ from engine.catalog import slug
 from engine.character import Character
 from engine.encounters import pick_encounter
 from models.item import Item, text_for
-from rulesets.game import RULES, material
+from rulesets.game import MATERIALS, RULES, material
 
 FREE_TYPES = {"look", "examine", "inventory", "status", "leader", "take", "drop", "give", "equip",
               "unequip", "extinguish", "fill", "rank", "talk", "buy", "sell"}
@@ -1077,7 +1077,7 @@ class Actions:
             desc = op.get("description")
             if not isinstance(desc, dict) or not all(desc.get(m) for m in ("light", "infravision", "touch")):
                 raise ActionError("A furnishing needs light, infravision and touch descriptions.")
-            if op.get("material", "misc") not in RULES_MATERIALS():
+            if op.get("material", "misc") not in MATERIALS:
                 raise ActionError(f"Unknown material '{op.get('material')}'.")
             item = Item(id=slug(op["name"]), name={"light": op["name"], "infravision": op.get("shape_name", op["name"]),
                                                     "touch": op.get("touch_name", op["name"])},
@@ -1181,11 +1181,6 @@ class Actions:
             ids = [self.world.spawn_group(group, self.state.scene)["id"]]
         if ids and self.state.phase == "exploration":
             combat.start(self.world, ids)
-
-
-def RULES_MATERIALS():
-    from rulesets.game import MATERIALS
-    return MATERIALS
 
 
 def clock_text(minutes: int) -> str:

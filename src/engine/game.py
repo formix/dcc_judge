@@ -43,12 +43,14 @@ class Game:
 
     # ── creation ────────────────────────────────────────────────────────────
     @classmethod
-    def new(cls, adventure_id: str, seed: int | None = None, party_size: int = 4, **kwargs) -> tuple["Game", dict]:
-        adventure = load_adventure(adventure_id)
+    def new(cls, source: str, seed: int | None = None, party_size: int = 4, **kwargs) -> tuple["Game", dict]:
+        """Start a game. `source` is an adventure file path, folder, URL or bundled id."""
+        adventure = load_adventure(source)
         dice = Dice(seed)
         start_level = adventure.encounters.get("level", RULES["encounter_level"]["default_start"])
         state = GameState(
             adventure_id=adventure.id,
+            adventure_source=adventure.source or source,
             scene=adventure.start,
             clock=adventure.data.get("clock_start", 0),
             encounter={"level": start_level, "start": start_level, "carry": 0, "dark": 0, "quiet": 0},
@@ -72,10 +74,13 @@ class Game:
         return game, result
 
     @classmethod
-    def load(cls, adventure_id: str, **kwargs) -> "Game":
+    def load(cls, source: str, **kwargs) -> "Game":
+        """Resume the saved game of an adventure (file path, folder, URL or bundled id)."""
         store = kwargs.pop("store", None) or SaveStore()
-        state = store.load(adventure_id)
-        return cls(load_adventure(adventure_id), state, store=store, **kwargs)
+        adventure = load_adventure(source)
+        state = store.load(adventure.id)
+        state.adventure_source = adventure.source or source
+        return cls(adventure, state, store=store, **kwargs)
 
     def world(self) -> World:
         return World(self.adventure, self.state, self.dice)

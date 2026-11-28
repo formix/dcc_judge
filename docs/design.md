@@ -770,13 +770,18 @@ Ollama. No candidate model has been evaluated.
 
 ### 12.2 MCP
 
-- The encounter level is handled by an **MCP server over stdio**. Serving it
-  online may be considered later.
-- The engine calls it; the model does not **[A]**.
-- The server is stateless: it receives the current level and events and returns
-  the new level, which the engine saves **[A]**.
-- The existing dice and scene services are called directly, without MCP **[A]**.
-- If the server fails, the action should not be partly saved **[A]**.
+- **The engine runs as an MCP server over stdio.** The Judge is an MCP client:
+  the console client in `src/cli/judge.py`, or any other MCP client.
+- Each turn uses two tools: `command` sends the player's words, and plain
+  commands are resolved by the engine's own parser; otherwise the Judge
+  interprets them and sends a proposal to `act`. This keeps section 3.2.
+- The encounter level (section 10.1) is handled inside the engine server. Its
+  rule is also exposed on its own as the `encounter_level` tool. Serving the
+  engine online may be considered later.
+- If anything unexpected fails during a request, the state is restored and
+  nothing is saved **[A]**.
+- An external Judge could narrate without calling `act`; the engine cannot
+  prevent that.
 
 ### 12.3 Saving [A]
 
@@ -787,16 +792,17 @@ events, creature and room states, and active adventure rules (section 14.1).
 
 ### 12.4 Changes to existing code
 
-| Existing | Change needed |
+Done in the first engine version (`docs/engine-notes.md` lists the details):
+
+| Existing | Change |
 |---|---|
-| `src/cli/judge.py` tool loop | Replace with the loops in section 3 |
-| `SYSTEM_PROMPT` | Rewrite; remove features excluded from this version |
-| `Equipment` model and equipment tables | Move to the shared item model with named rules |
-| `scene_service.py` | Selectable leader; add scene, clock and light state; persist |
-| `character_sheet.py` | Add maximum HP and carried-item slots |
-| `dice_server.py`, `scene_server.py` | Stop using them from the game **[A]** |
-| Encounter MCP server | New |
-| `README.md` | Update for the new design |
+| `src/cli/judge.py` tool loop | Replaced by a console client of the engine server |
+| `SYSTEM_PROMPT` | Replaced by the Judge guide (`src/engine/judge_guide.py`) and a narrator prompt |
+| `Equipment` model and tables | Tables moved to YAML; the catalog turns them into the shared `Item` model |
+| `scene_service.py`, `character_service.py`, `character_sheet.py` | Replaced by `src/engine/` |
+| `dice_server.py`, `scene_server.py`, `character_server.py` | Removed; replaced by `src/servers/engine_server.py` |
+| `get_ability_modifier` | Corrected to DCC Table 1-1 |
+| `README.md` | Updated |
 
 ## 13. Winning, losing and advancement
 

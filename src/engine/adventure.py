@@ -20,6 +20,9 @@ live in the save. Top-level keys:
 
 from __future__ import annotations
 
+import re
+import urllib.error
+import urllib.request
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
@@ -72,7 +75,7 @@ def parse_item(data: dict[str, Any], scene_id: str | None = None) -> Item:
 @dataclass
 class Adventure:
     data: dict[str, Any]
-    path: Path | None = None
+    source: str | None = None          # file path or URL it was loaded from
     scenes: dict[str, dict[str, Any]] = field(default_factory=dict)
     transitions: dict[str, dict[str, Any]] = field(default_factory=dict)
     objects: dict[str, dict[str, Item]] = field(default_factory=dict)  # fixed, by scene
@@ -214,16 +217,62 @@ class Adventure:
         return seen
 
 
-def list_adventures() -> list[str]:
-    return sorted(p.parent.name for p in ADVENTURES_DIR.glob("*/adventure.yaml"))
+MAX_ADVENTURE_BYTES = 5_000_000
+URL_TIMEOUT_SECONDS = 15
 
 
-def load_adventure(adventure_id: str) -> Adventure:
-    path = ADVENTURES_DIR / adventure_id / "adventure.yaml"
-    if not path.exists():
-        raise AdventureError(f"No adventure '{adventure_id}'. Available: {', '.join(list_adventures())}")
-    with open(path, encoding="utf-8") as f:
-        adventure = Adventure(yaml.safe_load(f), path)
+def list_adventures() -> list[dict[str, str]]:
+    """Adventures bundled with the project: id and file path."""
+    return [{"id": p.parent.name, "path": str(p)} for p in sorted(ADVENTURES_DIR.glob("*/adventure.yaml"))]
+
+
+def is_url(source: str) -> bool:
+    return bool(re.match(r"^https?://", source, re.IGNORECASE))
+
+
+def normalize_source(source: str) -> str:
+    """A URL as given, or a file path made absolute."""
+    if is_url(source):
+        return source
+    path = Path(source).expanduser()
+    if path.exists():
+        return str(path.resolve())
+    return source  # maybe a bundled adventure id
+
+
+def read_source(source: str) -> str:
+    """Read adventure YAML from an http(s) URL, a file, a folder holding
+    adventure.yaml, or the id of a bundled adventure."""
+    if is_url(source):
+        try:
+            with urllib.request.urlopen(source, timeout=URL_TIMEOUT_SECONDS) as response:
+                data = response.read(MAX_ADVENTURE_BYTES + 1)
+        except (urllib.error.URLError, OSError, ValueError) as exc:
+            raise AdventureError(f"Cannot download the adventure from {source}: {exc}") from exc
+        if len(data) > MAX_ADVENTURE_BYTES:
+            raise AdventureError(f"The adventure at {source} is larger than {MAX_ADVENTURE_BYTES} bytes.")
+        return data.decode("utf-8")
+    path = Path(source).expanduser()
+    if path.is_dir():
+        path = path / "adventure.yaml"
+    if not path.is_file():
+        bundled = ADVENTURES_DIR / source / "adventure.yaml"
+        if re.fullmatch(r"[A-Za-z0-9_-]+", source) and bundled.is_file():
+            path = bundled
+        else:
+            raise AdventureError(f"No adventure file at '{source}'.")
+    return path.read_text(encoding="utf-8")
+
+
+def load_adventure(source: str) -> Adventure:
+    """Load and validate an adventure from a file path, folder, URL or bundled id."""
+    try:
+        data = yaml.safe_load(read_source(source))
+    except yaml.YAMLError as exc:
+        raise AdventureError(f"The adventure is not valid YAML: {exc}") from exc
+    if not isinstance(data, dict) or "id" not in data:
+        raise AdventureError("The adventure file needs an 'id' and the other top-level keys.")
+    adventure = Adventure(data, normalize_source(source))
     errors, _ = adventure.validate()
     if errors:
         raise AdventureError("Invalid adventure:\n  " + "\n  ".join(errors))

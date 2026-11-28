@@ -31,6 +31,7 @@ SAVES_DIR = DATA_DIR / "saves"
 class GameState:
     adventure_id: str
     scene: str
+    adventure_source: str = ""           # file path or URL the adventure was loaded from
     version: int = SAVE_VERSION
     turn: int = 0
     clock: int = 0                       # game minutes since the adventure began

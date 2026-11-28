@@ -27,7 +27,9 @@ def test_engine_server_over_stdio(tmp_path):
                     result = await session.call_tool(tool, arguments=args)
                     return json.loads(result.content[0].text) if tool != "judge_guide" else result.content[0].text
 
-                started = await call("new_game", adventure="elders_secret", seed=2)
+                info = await call("adventure_info", adventure=str(ROOT / "adventures" / "elders_secret" / "adventure.yaml"))
+                assert info["ok"] and info["id"] == "elders_secret" and not info["saved_game"]
+                started = await call("new_game", adventure=info["source"], seed=2)
                 assert started["context"]["scene"]["scene"] == "outside"
                 status = await call("command", text="status")
                 assert status["handled"] and "leader" in status["summary"]
