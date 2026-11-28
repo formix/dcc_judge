@@ -164,5 +164,7 @@ def test_daily_stock_restocks_and_rotates(new_game):
 def test_shop_stock_view_is_data(new_game):
     game = new_game()
     game.command("visit the shopkeeper")
-    result = game.command("browse")
-    assert result["events"][0]["kind"] == "stock" and result["events"][0]["stock"]
+    assert "List wares" in [a["label"] for a in game.context()["available_actions"]]
+    for text in ("list wares", "browse", "what's for sale?"):
+        result = game.command(text)
+        assert result["events"][0]["kind"] == "stock" and result["events"][0]["stock"], text

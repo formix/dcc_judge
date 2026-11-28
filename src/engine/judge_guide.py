@@ -58,7 +58,7 @@ ACTION TYPES (free = no game time)
   light {target?}            free from a flame; otherwise 10 min with a fire starter
   extinguish | fill {target}                         free
   talk {actor?, text}                                free
-  browse                     free, shop only: list today's wares
+  browse                     free, shop only: list today's wares ("list wares")
   buy {target: item name, quantity?} | sell {target, negotiate?}   free, shop only
   heal {target: character}   10 min, uses healing supplies
   move {target: exit, silent?, cover?}               10 min (exit may differ)

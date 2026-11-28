@@ -72,7 +72,7 @@ scenes:
           cost_cp: 30
           rules: {dressing: true, stack: 3}
     menu:
-      - {label: Browse the wares, command: browse}
+      - {label: List wares, command: list wares}
       - {label: "Buy something (buy [number] <item>)", command: "buy "}
       - {label: "Sell or haggle (sell <item>, haggle <item>)", command: "sell "}
       - {label: Back to the tavern, command: go back to the tavern}

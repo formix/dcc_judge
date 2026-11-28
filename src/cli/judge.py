@@ -288,7 +288,7 @@ Plain commands the engine understands directly:
   take | drop | equip | unequip <item> | give <item> to <name>
   light [item] | extinguish <item> | fill <lantern>
   force | break | burn | repair <thing> | pick lock <door>
-  heal <name> | buy [n] <item> | sell <item> | haggle <item>
+  heal <name> | list wares | buy [n] <item> | sell <item> | haggle <item>
   <verb> <object>  for actions an object offers (e.g. oil door)
   leader <name> (or: <name> leads, make <name> leader) | <name> to the front|rear
   attack <enemy> | all attack | defend | flee <exit>
