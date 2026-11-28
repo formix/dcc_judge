@@ -39,6 +39,7 @@ from rich.prompt import Prompt  # noqa: E402
 from rich.text import Text  # noqa: E402
 
 from engine.judge_guide import JUDGE_GUIDE  # noqa: E402
+from rulesets.dcc import CHARACTER_ABILITIES, get_ability_modifier  # noqa: E402
 
 console = Console()
 
@@ -181,11 +182,23 @@ Plain commands the engine understands directly:
 With --model, anything else is interpreted by the Judge model."""
 
 
+def ability_line(abilities: dict[str, int]) -> str:
+    """The six DCC abilities with their modifiers, e.g. 'Str 13 (+1)'."""
+    parts = []
+    for ability in CHARACTER_ABILITIES:
+        score = abilities[ability]
+        mod = get_ability_modifier(score)
+        style = "green" if mod > 0 else "red" if mod < 0 else "white"
+        parts.append(f"{ability[:3] if ability != 'Luck' else 'Luck'} [bold {style}]{score:>2} ({mod:+d})[/bold {style}]")
+    return "  ".join(parts)
+
+
 async def set_up_party(session: Session, context: dict) -> None:
     console.print("[bold]Your four peasants[/bold] [dim](Enter keeps the suggestion)[/dim]\n")
     for c in context["party"]:
         console.print(f"[bold cyan]{c['name']}[/bold cyan]: {c['race']} {c['occupation']}, HP {c['hp']}, "
                       f"{c['alignment']}, carrying {', '.join(i['name'] for i in c['hands'] + c['pack'])}; {c['cp']} cp")
+        console.print("  " + ability_line(c["abilities"]))
         name = Prompt.ask("  Name", default=c["name"]).strip() or c["name"]
         if name != c["name"]:
             await session.call("customize_character", character=c["id"], name=name)
