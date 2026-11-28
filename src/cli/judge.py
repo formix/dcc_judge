@@ -115,10 +115,22 @@ class Session:
     def __init__(self, mcp: ClientSession, judge: ModelJudge | None):
         self.mcp = mcp
         self.judge = judge
+        self.leader = "You"
+
+    def follow_leader(self, result: dict) -> None:
+        """Keep the prompt on the current leader's name."""
+        leader = result.get("leader")
+        if not leader and result.get("context"):
+            leader = next((c["name"] for c in result["context"]["party"] if c["leader"]), None)
+        if leader:
+            self.leader = leader
 
     async def call(self, tool: str, **args) -> dict:
         result = await self.mcp.call_tool(tool, arguments=args)
-        return json.loads(result.content[0].text)
+        data = json.loads(result.content[0].text)
+        if isinstance(data, dict):
+            self.follow_leader(data)
+        return data
 
     def narrate(self, result: dict) -> None:
         show_rolls(result)
@@ -162,7 +174,7 @@ Plain commands the engine understands directly:
   force | break | burn | repair <thing> | pick lock <door>
   heal <name> | buy [n] <item> | sell <item> | haggle <item>
   <verb> <object>  for actions an object offers (e.g. oil door)
-  leader <name> | <name> to the front|rear
+  leader <name> (or: <name> leads, make <name> leader) | <name> to the front|rear
   attack <enemy> | all attack | defend | flee <exit>
   <name>, <command>  to have someone else act
   quit
@@ -212,10 +224,16 @@ async def run(args) -> None:
                     console.print(f"[red]{result['errors']}[/red]")
                     return
                 await set_up_party(session, result["context"])
+                # The first character leads (design 7); the player can change it in game.
+                first = (await session.call("get_context"))["party"][0]
+                if not first["leader"]:
+                    await session.call("command", text=f"leader {first['name']}")
+                session.leader = first["name"]
+                console.print(f"[dim]{first['name']} leads the party. Change it any time: leader <name>.[/dim]\n")
                 session.narrate(result)
             while True:
                 try:
-                    text = Prompt.ask("[bold green]You[/bold green]").strip()
+                    text = Prompt.ask(f"[bold green]{session.leader}[/bold green]").strip()
                 except (EOFError, KeyboardInterrupt):
                     break
                 if not text:

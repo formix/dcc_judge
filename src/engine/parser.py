@@ -27,9 +27,11 @@ SIMPLE: list[tuple[str, str]] = [
 PATTERNS: list[tuple[str, str, tuple[str, ...]]] = [
     (r"^(?:look at|examine|x|inspect|check|read) (.+)$", "examine", ("target",)),
     (r"^(?:inventory|inv|i) (?:of )?(.+)$", "inventory_of", ("actor",)),
-    (r"^(?:make )?(.+?) (?:the )?leader$", "leader", ("target",)),
-    (r"^(?:leader|lead) (.+)$", "leader", ("target",)),
-    (r"^(.+?) (?:leads|takes the lead)$", "leader", ("target",)),
+    (r"^(?:set|change|switch) (?:the )?leader (?:to )?(.+)$", "leader", ("target",)),
+    (r"^(?:make )?(.+?) (?:is )?(?:the |our )?(?:new )?leader$", "leader", ("target",)),
+    (r"^(?:leader|lead|new leader)[: ]+(.+)$", "leader", ("target",)),
+    (r"^(?:follow) (.+)$", "leader", ("target",)),
+    (r"^(.+?) (?:leads|takes the lead|leads the way)$", "leader", ("target",)),
     (r"^(?:sneak|creep|tiptoe|quietly go|quietly move|sneak through|sneak to|sneak into|sneak down|sneak up|move quietly to|move quietly through) (.+)$", "move_silent", ("target",)),
     (r"^(?:go|walk|move|enter|climb|head|descend|ascend|take the|go through|go down|go up|go into|go to|crawl|crawl into|crawl through|slide down|ride|jump into) (.+)$", "move", ("target",)),
     (r"^(?:search|search the|search in|look in|look behind|look under) (.+)$", "search", ("target",)),
@@ -89,7 +91,7 @@ def _strip_actor(part: str, world) -> tuple[str | None, str]:
     words = part.split(" ", 1)
     if len(words) == 2 and any(c.name.lower() == words[0] for c in world.state.living()):
         rest = words[1]
-        if not re.match(r"^(?:leads|takes the lead|to the|goes to|moves to)", rest):
+        if not re.match(r"^(?:leads|takes the lead|is (?:the |our )?(?:new )?leader|leader|to the|goes to|moves to)", rest):
             return world.find_character(words[0]).name, rest
     return None, part
 

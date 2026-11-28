@@ -36,7 +36,7 @@ Several actions run in order; an encounter or an error stops the rest.
 ACTION TYPES (free = no game time)
   look | inventory | status                          free
   examine {target}                                   free
-  leader {target: character}                         free
+  leader {target: character}  free; the leader sets the pace, surprise and default actor
   rank {actor, rank: front|rear}                     free
   take | drop {target, actor?}                       free
   give {target, to}                                  free

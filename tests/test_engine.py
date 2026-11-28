@@ -240,3 +240,16 @@ def test_unknown_commands_go_to_the_judge(new_game):
     game = new_game()
     result = game.command("I whistle a sad tune for the goats")
     assert result["handled"] is False and "context" in result
+
+
+def test_first_character_leads_and_leader_can_change(new_game):
+    game = new_game()
+    first, second = game.state.characters[0], game.state.characters[1]
+    assert game.state.leader == first.id
+    assert game.command("status")["leader"] == first.name
+    for text in (f"leader {second.name}", f"{first.name} leads", f"make {second.name} leader",
+                 f"set leader to {first.name}", f"{second.name} is the leader"):
+        result = game.command(text.lower())
+        assert result["handled"] and result["ok"], (text, result)
+    assert game.state.leader == second.id
+    assert game.command("look")["leader"] == second.name

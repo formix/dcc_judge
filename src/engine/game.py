@@ -102,8 +102,9 @@ class Game:
             return self._result(self.world(), [], handled=True, extra_summary="The adventure is over.")
         proposal = parse(text, self.world())
         if proposal is None:
+            leader = self.state.character(self.state.leader)
             return {"handled": False, "reason": "The built-in parser did not understand this; the Judge must interpret it.",
-                    "context": self.context()}
+                    "leader": leader.name if leader else None, "context": self.context()}
         return self.act(proposal, source="parser", text=text)
 
     def act(self, proposal: dict | str, source: str = "judge", text: str = "") -> dict[str, Any]:
@@ -177,9 +178,11 @@ class Game:
             lines += errors
         if extra_summary:
             lines.append(extra_summary)
+        leader = self.state.character(self.state.leader)
         return {
             "ok": not errors,
             "handled": handled,
+            "leader": leader.name if leader else None,
             "events": world.events,
             "errors": errors,
             "summary": "\n".join(lines),
