@@ -151,6 +151,18 @@ def _item(entry: dict | None) -> str:
     return text
 
 
+def ask(prompt: str, **kwargs) -> str:
+    """Read a line, then make sure what follows starts on a fresh line.
+
+    Without this, a box printed right after the prompt (often the leader's
+    inventory, which comes first) begins on the prompt's line and its borders break.
+    """
+    try:
+        return Prompt.ask(prompt, console=console, **kwargs)
+    finally:
+        console.line()
+
+
 def show_actions(actions: list[dict] | None) -> None:
     """The scene's menu, stated clearly (design 13)."""
     if actions:
@@ -270,7 +282,7 @@ async def set_up_party(session: Session, context: dict) -> None:
         console.print(f"[bold cyan]{c['name']}[/bold cyan]: {c['race']} {c['occupation']}, HP {c['hp']}, "
                       f"{c['alignment']}, carrying {', '.join(i['name'] for i in c['hands'] + c['pack'])}; {c['cp']} cp")
         console.print("  " + ability_line(c["abilities"]))
-        name = Prompt.ask("  Name", default=c["name"]).strip() or c["name"]
+        name = ask("  Name", default=c["name"]).strip() or c["name"]
         if name != c["name"]:
             await session.call("customize_character", character=c["id"], name=name)
     console.print()
@@ -326,7 +338,7 @@ async def run(args) -> None:
                 session.narrate(result)
             while True:
                 try:
-                    text = Prompt.ask(f"[bold green]{session.leader}[/bold green]").strip()
+                    text = ask(f"[bold green]{session.leader}[/bold green]").strip()
                 except (EOFError, KeyboardInterrupt):
                     break
                 if not text:
