@@ -4,8 +4,8 @@ A console text adventure inspired by the Zork series and based on the Dungeon
 Crawl Classics (DCC) rules. A model, local or remote, acts as the Judge: it reads
 a written adventure, rules on what the player attempts and narrates the results.
 
-> **Spoiler warning:** section 15 reveals the adventure's secret. This document
-> must never be part of the Judge model's input.
+This document covers the game's rules and architecture. Story content belongs in
+an adventure document, such as `adventure-E01.md`.
 
 **How to read this document**
 
@@ -19,7 +19,7 @@ a written adventure, rules on what the player attempts and narrates the results.
 
 **Included**
 
-- A 0-level funnel in a five-room dungeon.
+- A 0-level funnel in a five-room dungeon, described in `adventure-E01.md`.
 - A village with a tavern and a shopkeeper. The shopkeeper lets the player sell
   and restock. The village and tavern do not count among the five rooms.
 - A party of at most four characters.
@@ -111,6 +111,11 @@ or on a return. The description includes past changes.
    state. If narration fails, the engine prints a plain summary without repeating
    or rerolling the action.
 
+**Irreversible acts.** For an act the engine or the adventure marks as
+irreversible, the Judge restates plainly what the player is about to do and waits
+for confirmation before resolving it. This guards against misreading, not against
+bad judgment.
+
 Narration can still state something false even though it cannot change the saved
 game. Playtesting has to watch for this.
 
@@ -168,11 +173,13 @@ set]**. Extra behaviour comes from **named rules** that the engine understands.
 | `breaks: [kinds]` | The kinds of material the item can break; a pickaxe breaks stone |
 | `unbreakable` | Cannot be broken |
 | `weapon` | Weapon statistics |
-| `light` | Gives light for a number of minutes |
+| `light` | Gives light for a number of minutes, or without limit |
 | `locked` | Needs a key or another way through **[A]** |
+| `bane` | Extra damage against a named kind of creature |
+| `waterproof` | A container whose contents cannot be soaked or ruined |
 
-New rules are added only when an adventure needs them. The Judge can attach only
-listed rules, within engine limits **[A]**.
+These are the universal rules. An adventure can add its own (section 14.1). The
+Judge can attach only listed rules, within engine limits **[A]**.
 
 ### 4.3 Carrying capacity
 
@@ -204,6 +211,10 @@ Characters carry items in **slots**. The details below are **[A]**.
   separately **[A]**.
 - Anything burning gives light for a time based on its size. Fire does not spread
   **[A]**.
+- **Water:** being plunged into water puts out open flames. A **soaked** light
+  source cannot be lit for a set time (60 minutes by default). Paper and parchment
+  are **ruined** and destroyed. Contents of a `waterproof` container are spared.
+  The material table says which materials water ruins **[A]**.
 
 ### 4.5 Transitions
 
@@ -238,6 +249,25 @@ Check for missing IDs, scenes unreachable from the start and scenes with no rout
 back to the village. The route checks follow link directions and assume barriers
 can be passed. An intentional trap is reported as a warning. Keys, destructible
 routes and evidence must still be tested by playing.
+
+### 4.7 Repair
+
+| Repair | Time | Result |
+|---|---|---|
+| **Quick** | 10 minutes | The item works for **one more use**, or one more combat for a weapon or armour. Then it breaks and is **unusable forever**. |
+| **Real** | From an hour to a day or more | The item works **forever** |
+
+The following are **[A]**:
+
+- A real repair needs suitable tools and either a character whose occupation fits
+  or a village craftsperson. The check follows the occupation rule (section 11).
+- The Judge sets a real repair's time within that range from the item's
+  complexity. The time counts toward any deadline.
+- An item that broke after a quick repair cannot be repaired again, not even by a
+  real repair. A ruined item cannot be repaired.
+- Refitting armour (fumble result 6) is not a repair: 10 minutes removes the
+  penalty with no later breakage.
+- An item awaiting its one use after a quick repair is shown as **patched**.
 
 ## 5. Time
 
@@ -350,8 +380,7 @@ when created. Names, notes and history are filtered too.
 
 The author places each opportunity and the engine generates the character. New
 characters arrive with little or no equipment and can be recruited once. With a
-full party, they can stay where they are. A villager rescue is one possible
-encounter of this kind, not the objective.
+full party, they can stay where they are.
 
 ### 8.1a Village volunteers
 
@@ -596,8 +625,8 @@ A duration is `rounds` (a number or dice) or `until`, which is a named event
 The loader rejects unknown operations and parameters. A result needing a new effect
 requires a new operation in the engine, or a deliberate replacement entry.
 
-**Engine gaps these tables expose:** saving throws; repair as a timed action; and
-`speed_penalty`, which has no effect yet with front and rear ranks.
+Saving throws and `speed_penalty` are covered in sections 11.1 and 11.2; repair in
+section 4.7. A `disable_weapon` result is fixed by a quick or real repair.
 
 ### 9.7 Morale
 
@@ -687,8 +716,13 @@ ability and one of these difficulties:
 | Hard | 15 |
 | Exceptional | 20 |
 
-- The normal roll is d20 plus the ability modifier. The engine applies class,
-  training and darkness rules.
+- **Occupation rule:** a 0-level character rolls **d20** plus the ability modifier
+  when their occupation plausibly applies, and **d10** otherwise. A blacksmith
+  forcing a hinge rolls d20; a scribe rolls d10. The Judge decides whether the
+  occupation applies, and the engine saves that ruling for the character and that
+  kind of task. Check this against the DCC rulebook.
+- Darkness steps the die down: d20 to d16, d10 to d8 **[A]**. For perception
+  without infravision in the dark, the flat d10 is the worst case **[A]**.
 - Routine actions succeed and impossible ones fail without a roll. Preparation can
   make an action automatic, lower the difficulty one step or remove a consequence.
 - A ruling is saved per actor, target and method. A retry cannot get easier unless
@@ -696,6 +730,30 @@ ability and one of these difficulties:
 - Group silence uses one roll by the least stealthy member **[A]**.
 - Luck can be burned after a roll is shown and before it applies. The engine
   enforces class rules **[A]**.
+
+### 11.1 DCC rules followed [A: check each against the rulebook]
+
+Where DCC has a rule, the game follows it. These are needed for the first version:
+
+- Saving throws: Reflex, Fortitude and Will, from the Agility, Stamina and
+  Personality modifiers at 0 level.
+- Surprise in light (the "normal rules" in section 6.3).
+- Armour penalties on checks.
+- Attacking with a weapon outside one's occupation.
+- Critical hits by creatures.
+- Falling damage.
+- Burn times for lanterns, oil and candles.
+- Shooting into a melee, if DCC has a rule for it.
+
+### 11.2 Defaults where DCC has no rule [A]
+
+| Gap | Default |
+|---|---|
+| Coins | 100 coins per carried-item slot |
+| Speed penalty | No effect in front and rear ranks |
+| Ranged and reach weapons | Attack from the rear rank. Shooting into a melee follows DCC if it has a rule; otherwise there is no friendly fire. |
+| Ammunition | Half can be recovered after a won fight |
+| Hazards | Falls use DCC. Other hazards use a short damage table, together with improvised weapon categories and a small material table. Claude drafts all three; playtesting adjusts them. |
 
 ## 12. Technical architecture
 
@@ -724,7 +782,8 @@ Ollama. No candidate model has been evaluated.
 
 The game autosaves after each action to a single slot. Saving is for resuming, not
 undoing. The save holds scene changes, item locations, characters, clock, torches,
-encounter level, discoveries, rulings and recorded facts.
+encounter level, discoveries, rulings, recorded facts, flags, counters, scheduled
+events, creature and room states, and active adventure rules (section 14.1).
 
 ### 12.4 Changes to existing code
 
@@ -749,136 +808,47 @@ encounter level, discoveries, rulings and recorded facts.
   the dungeon; they return to the village and train for a week. Outside a funnel,
   0-level characters follow the DCC experience chart.
 
-## 14. Goal and evidence
+## 14. What an adventure defines
 
-**Goal:** prove that the village elder made a pact with a demon, so the elder can
-be put on trial.
+Story content lives in a separate adventure document; the first is
+`adventure-E01.md`. The engine needs to support these:
 
-- There are three pieces of evidence, and any two are enough. **Every pair** must
-  prove the elder's part in the pact.
-- At least two pieces are reachable without a hidden passage or a particular
-  check **[A]**.
-- Evidence counts when a survivor carries it to the village. A witness must arrive
-  alive, has rules for travel and harm, and takes no party slot **[A]**.
-- Learning something is not the same as holding proof. Dropped evidence can be
-  recovered **[A]**.
-- Losing evidence does not by itself lose the run: failing to find enough leads to
-  an ending in section 14.1.
-- Returning with enough evidence leads to the village endings in section 14.1.
-
-### 14.1 Village endings
-
-| Party's decision | Elder and daughter | Village leadership | Village alignment |
-|---|---|---|---|
-| Hide the proof | The priest leaves; the elder lives and takes over | The elder | Chaotic **[A]** |
-| Fail to find enough proof within 24 hours | The demon, protecting the elder, makes the priest die in his sleep; the elder lives and takes over | The elder | Chaotic **[A]** |
-| Side with the priest and let the trial run | The trial is flawed; the elder is hanged and the daughter dies | The priest | Lawful |
-| Intervene during the trial in the elder's favour | The elder is exiled; the priest leaves | The merchants' guild | Neutral |
-
-- Each village alignment gives perks, **not yet defined**.
-- The alignment influences the probability of each alignment among future
-  recruits.
-- Alignment is flavour, not morality. A chaotic village is not necessarily evil,
-  and a lawful one is not necessarily good.
-- This version saves the village alignment. Perks and recruit probabilities can be
-  added with later play **[A]**.
-- There is no fight with the priest.
-- Whether every ending counts as winning the funnel is open (section 18).
-
-| Example evidence **[A]** | What it proves |
+| Element | Engine support |
 |---|---|
-| Pact tablet | Names the elder and records the bargain |
-| Letter in the elder's hand | Discusses what the elder owes under the pact |
-| Captive witness | Saw the elder make the pact |
+| Goal and evidence | Track what is found, carried and brought back, and how much is enough |
+| Endings | Several outcomes, each stating whether the funnel is won and what is saved |
+| Argument without a roll | The Judge matches a player's argument to authored facts; the engine confirms each was discovered |
+| Deadline | A limit on the game clock, travel time, warnings and an outcome on expiry |
+| Secrets and facts | Keep facts out of the Judge's input until discovered. Each speaking character has the facts they know and those they will say. |
+| Special items | Authored items with their own named rules |
+| Flags and counters | Named values in the save. A counter can have thresholds, each with effects. |
+| Triggers | A condition, such as entering a scene, taking an item, a flag being set, a counter threshold or a time, that applies effects |
+| Timed events | Effects scheduled on the game clock, such as a runner arriving or a theft noticed later. Their clock keeps running while the party is away. |
+| States | Named states for creatures and rooms, each changing description and behaviour |
+| Traps | What triggers it; how it can be found; precautions that avoid or disarm it; the check and damage; effects such as putting out flames; how long it takes to reset |
+| Creature behaviour | Authored senses and habits, for example blind and hunting by sound, drawn to light, or too slow to get a parting attack on fleeing characters |
+| Companions | Characters who travel with the party without taking a slot. They have their own HP, the creatures that will or will not harm them, and what happens at 0 HP. |
+| Named recruits | Recruits with a fixed name, ability overrides, equipment and triggered behaviour |
+| Ending resolution | The order in which an ending's events, debts and other consequences are resolved, and epilogue lines that depend on what happened |
 
-**The trial plea.** A relevant argument supported by what the party has learned
-succeeds without a roll. Otherwise the trial continues.
+### 14.1 Adventure rules
 
-- The author lists the facts that can support the plea, and one is enough **[A]**.
-  Examples **[A]:** the daughter still depends on the pact; the elder used the
-  power only to protect her; the trial is unfair.
-- The Judge matches the player's own words to those facts, and the engine confirms
-  the party has discovered each one used **[A]**.
-- At least one supporting fact can be discovered before the trial without a check
-  or hidden passage, for example by meeting the daughter **[A]**.
-- Before the trial ends, the Judge may ask for clarification and the player may
-  strengthen the argument. The player confirms when finished **[A]**.
+An adventure can add rules of its own. They are written in the adventure, not in
+this document.
 
-### 14.2 Deadline
+- A rule becomes active when the adventure adds it: at the start, or when a trigger
+  fires. Active rules are stored in the save.
+- When the game ends, by any ending or by losing the run, the adventure's rules are
+  removed from the save **unless the rule itself states otherwise**. A rule that
+  persists, such as a curse on an item a survivor keeps, says so and says how long.
+- An adventure rule may make an exception to a universal rule within that
+  adventure. It names the rule it overrides **[A]**.
+- Adventure rules are built from the features in section 14. A rule that cannot be
+  expressed that way needs engine code supplied with the adventure **[A]**.
+- An adventure rule is a secret until the party discovers its effects, like any
+  other fact **[A]**.
 
-- The party has **24 hours** to find proof. After that, the priest dies as
-  described above.
-- Going back to the village and heading into the dungeon again spends **6 hours**.
-- The 6 hours cover the whole round trip, 3 hours each way **[A]**.
-- The engine tracks the deadline on the game clock, not in real time **[A]**.
-  Dungeon actions count toward it, including darkness time multipliers.
-- To meet it, the party must be back in the village with the proof before the 24
-  hours end **[A]**.
-- The clock starts when the party first sets out, and that first journey takes 3
-  hours **[A]**.
-- Travel burns no torch time and has no encounter checks **[A]**.
-- The party is warned that time is running out, but the cause of the threat stays
-  hidden. The demon's involvement is not given to the Judge before it can be
-  revealed.
-- Possible warnings **[A]:** the priest says he will bring the matter to a head by
-  this time tomorrow but needs proof first; his health worsens as the deadline
-  approaches; the Judge gives warnings when the party returns; the status shows
-  the approximate time left.
-- Missing the deadline without enough proof reaches the chaotic ending but does
-  **not** win the funnel, so no one is marked "ready to level up" **[A]**.
-
-## 15. Adventure secret (spoilers)
-
-- The elder did make a pact with a demon.
-- The elder used the power it granted to save his daughter's life when she was an
-  infant, 20 years ago.
-- The daughter's life **still depends on the pact**.
-- The village priest has heard of the pact and wants the elder hanged.
-
-**Handling [A]:** the pact and its motive stay out of the Judge's input until
-discovered. The motive is a separate discovery: evidence of the pact does not
-reveal why it was made. The priest and elder have separate sets of facts they can
-speak about, so the model cannot leak what it was never given.
-
-The truth sets up a moral choice: hanging the elder also costs the daughter's
-life. Section 14.1 gives the endings. Open questions are listed in section 18.
-
-## 16. Item of power [A: the whole design]
-
-One powerful item or weapon, with a twist or flaw, is to be found during the
-adventure. That requirement is decided; the design below is a proposal.
-
-### Wickdrinker
-
-A narrow black sword with a hilt wrapped in wax-stiffened cord. When it is drawn,
-nearby flames lean toward it.
-
-| Aspect | Rule |
-|---|---|
-| Power: strike | +2 to attack rolls and 1d12 damage |
-| Power: bane | An extra 1d6 damage against demons and their servants |
-| Flaw: hunger | Each hit costs 5 minutes from one lit torch carried by the party |
-| Flaw: darkness | Any hunger that no torch can pay costs the wielder 1 HP per hit |
-
-- **Timing:** the combat's 10 minutes are charged first, then the total hunger.
-  This keeps torches lit during the fight.
-- **Which torch:** the wielder's own if lit, otherwise another lit torch. Any
-  unpaid remainder moves to the next lit torch before costing HP.
-- **Unpaid hunger:** each hit with any unpaid portion costs 1 HP. In the dark, that
-  damage applies immediately, so it can kill the wielder mid-fight.
-- **Discovery:** the player is not told the flaw. The torch's visible stage drops
-  and the narration describes the flame bending toward the blade.
-- **Limits:** it gives no light, is not required to win and is not evidence. It
-  cannot be broken. The wielder can put it down at any time.
-- **Why it works here:** it is very strong for a 0-level character, but spends the
-  light needed to get home. Using it in the dark with infravision avoids losing
-  torch time but costs blood.
-
-The engine needs one new named rule for the hunger and one for the bane. Its
-numbers need playtesting. A possible story link, not decided, is that it was made
-to enforce demonic debts.
-
-## 17. Building order [A]
+## 15. Building order [A]
 
 **Milestone 1: the dungeon,** with a 0-level party, built in slices:
 
@@ -891,50 +861,24 @@ to enforce demonic debts.
 Until the village exists, the dungeon entrance stands in for it, including in
 validation.
 
-**Milestone 2: the village,** with travel, shop, money, replacements, the priest,
-the elder and the ending. This completes the first version.
+**Milestone 2: the village,** with travel, shop, money, replacements, the
+adventure's village characters and its endings. This completes the first version.
 
 **Later:** level-up and training, classes, tavern recruits, retirement, followers,
 XP and magic.
 
-**Test elements the five rooms should cover [A]:** a loop with two routes; a
-one-way drop with another way out; a locked or stuck door; a squeaky door and oil;
-rhythmic forge hammering; a breakable object; an optional hidden passage; random
-encounters and one fixed fight; a darkness hazard; a replacement opportunity;
-three pieces of evidence; the item of power. A first torch estimate is four,
-for a main route of about 12 timed actions in light.
+## 16. Open questions
 
-## 18. Open questions
+No decision is needed from the project owner at the moment.
 
-### Where to resume
+**For Claude to draft, for review:**
 
-**Current topic:** designing the five-room dungeon. It is decided that the project
-owner and Claude **design it together**: premise and map first, then one room at a
-time, with Claude continuing to question the ideas.
-
-**Next question:** what was this place before the party arrived, and why would
-evidence of the elder's pact still be there?
-
-A possible starting structure **[A]** is the five-room dungeon: entrance and
-guardian; puzzle or social encounter; setback; climax; revelation or reward. These
-are story roles, not a required linear order. See sections 14, 15 and 17 for the
-goal, secret and test elements.
-
-### Remaining questions
-
-| Area | Question |
+| Area | Draft |
 |---|---|
-| Endings | Does hiding the proof win the funnel? |
-| Endings | What happens to the daughter when the elder lives or is exiled? |
-| Endings | How does the party learn that the daughter depends on the pact before deciding? |
-| Endings | What perks and recruit probabilities does each alignment give? |
-| Story | Who sends the party: the priest or someone else? |
-| Endings | How does the party hide the proof: by declaring it, or through actions such as lying to the priest? Can a lie be discovered? |
-| Story | What does the demon want, and why is the evidence in this dungeon? |
-| Combat | Creature critical hits; saving throws; effect of speed penalties; repair |
-| Equipment | Stack limits |
-| Village | Healing supply price and stock, filling slots with followers |
-| Adventure | The five rooms, encounter table, travel times, ending text |
-| Interface | Starting, resuming and ending a run; console commands |
-| Judge | Improvised weapon categories, limits on consequences, material table |
-| Item of power | Accept, change or replace Wickdrinker |
+| Adventure data | The file format for scenes, objects, transitions, triggers, flags, timed events and adventure rules |
+| Interface | Starting, resuming and ending a run; a minimal set of console commands, including Zork-style shortcuts |
+| Judge limits | The hazard damage table, improvised weapon categories and the material table |
+| Equipment | Stack limits per type of supply |
+
+**To check against the DCC rulebook:** every item in section 11.1, plus the
+mechanics marked for checking elsewhere.
