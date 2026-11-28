@@ -23,7 +23,9 @@ THE VILLAGE AND THE TAVERN
 - "glean rumors" reveals the adventure's hook first, then further rumors.
   The road out of the village opens once the hook is known.
 
-INVENTORY AND STATUS
+INVENTORY, STATUS AND THE SHOP
+- For the shop's wares, call the `shop_stock` tool and show its list exactly;
+  never describe what the shop sells in prose.
 - For inventory, call the `inventory` tool and show its list exactly; for
   status, show the result's summary as is. Never narrate or invent what a
   character carries or how they are.
@@ -56,6 +58,7 @@ ACTION TYPES (free = no game time)
   light {target?}            free from a flame; otherwise 10 min with a fire starter
   extinguish | fill {target}                         free
   talk {actor?, text}                                free
+  browse                     free, shop only: list today's wares
   buy {target: item name, quantity?} | sell {target, negotiate?}   free, shop only
   heal {target: character}   10 min, uses healing supplies
   move {target: exit, silent?, cover?}               10 min (exit may differ)

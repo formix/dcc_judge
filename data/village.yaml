@@ -32,10 +32,37 @@ scenes:
       light: "A cramped shop off the green. Rope, tallow and tools hang from every beam. The shopkeeper counts coins without looking up."
       infravision: "A cramped room hung with goods; someone counting."
       touch: "Rope and tallow everywhere. Coins clink on a counter."
+    # Design 13: the shopkeeper. Trade goods are restocked to these quantities
+    # every game day; tools, weapons and armor are a selection rerolled daily.
     shop:
-      stock: [Torch, "Flint & steel", Flask of oil, Lantern, Candle, Rope, Iron spike, Chalk, Rations,
-              Waterskin, "Sack, small", "Sack, large", Waterproof sack, Backpack, Crowbar, Pole, Dagger,
-              Club, Staff, Spear, Sling, Sling stone, Shield, Padded, Leather armor]
+      trade_goods:
+        Torch: 20
+        Rations: 12
+        "Flint & steel": 3
+        Flask of oil: 6
+        Candle: 20
+        Chalk: 10
+        Iron spike: 12
+        Rope: 3
+        Waterskin: 4
+        "Sack, small": 4
+        "Sack, large": 2
+        wound dressing: 3
+      daily:
+        tools:
+          count: 3
+          quantity: 1d2
+          from: [Crowbar, Pole, Grappling hook, "Hammer, small", Pick, Shovel, Lantern, Waterproof sack,
+                 Backpack, "Mirror, hand-sized", Chain, "Thieves' tools", Steel tongs, Trowel]
+        weapons:
+          count: 3
+          quantity: 1
+          from: [Dagger, Club, Staff, Spear, Short sword, Handaxe, Sling, Shortbow, Mace, Javelin,
+                 Longsword, Warhammer, Flail, Crossbow, Dart, Blackjack]
+        armor:
+          count: 2
+          quantity: 1
+          from: [Padded, Leather armor, Studded leather, Hide armor, Shield, Iron helmet, Steel helmet]
       custom:
         - id: wound_dressing
           name: {light: wound dressing, infravision: wound dressing, touch: wound dressing}
@@ -44,8 +71,8 @@ scenes:
           portable: true
           cost_cp: 30
           rules: {dressing: true, stack: 3}
-      limited: {wound dressing: 3}
     menu:
+      - {label: Browse the wares, command: browse}
       - {label: "Buy something (buy [number] <item>)", command: "buy "}
       - {label: "Sell or haggle (sell <item>, haggle <item>)", command: "sell "}
       - {label: Back to the tavern, command: go back to the tavern}

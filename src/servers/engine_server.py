@@ -134,6 +134,16 @@ def inventory(character: str = "") -> str:
 
 
 @mcp.tool()
+def shop_stock() -> str:
+    """Everything the shop sells today, as a list: name, category (trade goods,
+    tools, weapons, armor), quantity left and price, plus each character's money.
+    Trade goods are restocked daily; tools, weapons and armor change daily.
+    Show it to the player as a list, as is; never describe the wares in prose.
+    Only works while the party is at a shop. No game time passes."""
+    return _dump(_need_game().shop_stock())
+
+
+@mcp.tool()
 def character_sheet(character: str) -> str:
     """A full character sheet, including birth augur and ability scores."""
     game = _need_game()

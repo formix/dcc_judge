@@ -38,6 +38,7 @@ from rich.console import Console  # noqa: E402
 from rich.markup import escape  # noqa: E402
 from rich.panel import Panel  # noqa: E402
 from rich.prompt import Prompt  # noqa: E402
+from rich.table import Table  # noqa: E402
 from rich.text import Text  # noqa: E402
 
 from engine.judge_guide import JUDGE_GUIDE  # noqa: E402
@@ -107,7 +108,26 @@ def show(text: str, title: str = "⚖  THE JUDGE  ⚖", style: str = "red") -> N
                             border_style=style, padding=(1, 2)))
 
 
-DISPLAY_ONLY = {"inventory", "status"}
+DISPLAY_ONLY = {"inventory", "status", "stock"}
+CATEGORY_TITLES = {"trade goods": "Trade goods", "tools": "Tools", "weapons": "Weapons", "armor": "Armor"}
+
+
+def show_stock(rows: list[dict]) -> None:
+    """The shop's wares as a table: never as prose."""
+    table = Table(title="[bold yellow]For sale today[/bold yellow]", border_style="yellow", expand=False)
+    table.add_column("Item")
+    table.add_column("Left", justify="right")
+    table.add_column("Price", justify="right")
+    table.add_column("Notes", style="dim")
+    last = None
+    for row in rows:
+        if row["category"] != last:
+            last = row["category"]
+            table.add_row(f"[bold]{CATEGORY_TITLES.get(last, last.capitalize())}[/bold]", "", "", "")
+        notes = row.get("damage") or (f"AC +{row['ac']}" if "ac" in row else "")
+        left = str(row["quantity"]) if row["quantity"] else "[red]sold out[/red]"
+        table.add_row(f"  {escape(row['name'])}", left, row["price"], notes)
+    console.print(table)
 
 
 def show_inventory(views: list[dict]) -> None:
@@ -221,13 +241,16 @@ class Session:
         inventories = [e["inventory"] for e in events if e.get("kind") == "inventory" and e.get("inventory")]
         if inventories:
             show_inventory(inventories)
+        for e in events:
+            if e.get("kind") == "stock":
+                show_stock(e.get("stock") or [])
         others = [e for e in events if e.get("kind") not in DISPLAY_ONLY]
         statuses = [e["text"] for e in events if e.get("kind") == "status"]
         if statuses:
             show("\n".join(statuses), title="STATUS", style="cyan")
         if events and not others and not result.get("errors"):
             return  # facts about the party: shown as they are, never narrated
-        if inventories or statuses:
+        if inventories or statuses or any(e.get("kind") == "stock" for e in events):
             result = {**result, "summary": "\n".join(e["text"] for e in others) +
                       ("\n" + "\n".join(result["errors"]) if result.get("errors") else "")}
             summary = result["summary"]

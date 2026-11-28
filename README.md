@@ -93,7 +93,7 @@ python src/servers/engine_server.py
 
 `new_game` and `list_adventures` take the adventures directory; `new_game` can
 also force one adventure by file path, URL or id. Tools: `new_game`, `resume_game`,
-`reset_game`, `saved_game`, `list_adventures`, `get_context`, `command`, `act`, `inventory`,
+`reset_game`, `saved_game`, `list_adventures`, `get_context`, `command`, `act`, `inventory`, `shop_stock`,
 `customize_character`, `character_sheet`, `list_adventures`,
 `encounter_level`, `judge_guide`. The `judge` prompt and `judge_guide` tool
 explain the turn loop and the proposal format.

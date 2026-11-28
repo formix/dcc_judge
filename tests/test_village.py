@@ -90,7 +90,7 @@ def test_the_shop_shows_each_characters_money(new_game):
     purse = result["purse"]
     assert [(c["name"], c["cp"]) for c in purse["characters"]] == [(c.name, c.cp) for c in game.state.characters]
     assert purse["party_cp"] == 164 and purse["characters"][0]["leader"]
-    assert f"{game.state.characters[0].name} 3 sp 9 cp" in result["summary"]
+    assert purse["characters"][0]["text"] == "3 sp 9 cp"
     after = game.command("buy 3 torches")
     assert after["purse"]["characters"][0]["text"] == "3 sp 6 cp"
 
@@ -120,3 +120,49 @@ def test_shop_actions_use_the_named_character_or_the_leader(new_game):
     world.add_item(make_item("Chalk"), {"char": pim.id, "slot": "pack"})
     refused = game.command("sell chalk")
     assert not refused["ok"] and f"{leader.name} does not have the Chalk; {pim.name} does." in refused["errors"][0]
+
+
+def test_shop_names_exist_in_the_catalog():
+    import yaml
+    from engine.catalog import catalog_item
+    shop = yaml.safe_load(open(Path(__file__).resolve().parents[1] / "data" / "village.yaml"))["scenes"][1]["shop"]
+    custom = {c["name"]["light"] for c in shop["custom"]}
+    names = list(shop["trade_goods"]) + [n for spec in shop["daily"].values() for n in spec["from"]]
+    missing = [n for n in names if n not in custom and catalog_item(n) is None]
+    assert missing == []
+    assert "Shield" in shop["daily"]["armor"]["from"]
+
+
+def test_daily_stock_restocks_and_rotates(new_game):
+    game = new_game(6)
+    assert game.shop_stock()["ok"] is False                      # not at a shop
+    entered = game.command("visit the shopkeeper")
+    stock_events = [e for e in entered["events"] if e["kind"] == "stock"]
+    assert stock_events, "entering the shop lists the wares as data"
+    rows = stock_events[0]["stock"]
+    cats = [r["category"] for r in rows]
+    assert cats.count("tools") == 3 and cats.count("weapons") == 3 and cats.count("armor") == 2
+    assert all({"name", "quantity", "price_cp", "price"} <= set(r) for r in rows)
+    assert "For sale" not in entered["summary"] and "sells:" not in entered["summary"]
+    torches = next(r for r in rows if r["name"] == "Torch")["quantity"]
+    for c in game.state.characters:
+        c.cp = 500
+    assert game.command("buy 5 torches")["ok"]
+    assert next(r for r in game.shop_stock()["stock"] if r["name"] == "Torch")["quantity"] == torches - 5
+    too_many = game.command(f"buy {torches} torches")
+    assert not too_many["ok"] and "left today" in too_many["errors"][0]
+    first_day = [r["name"] for r in rows if r["category"] != "trade goods"]
+    days = []
+    for _ in range(4):                                           # several days, to see the rotation
+        game.state.clock += 1440
+        stock = game.shop_stock()
+        days.append([r["name"] for r in stock["stock"] if r["category"] != "trade goods"])
+        assert next(r for r in stock["stock"] if r["name"] == "Torch")["quantity"] == torches
+    assert any(day != first_day for day in days)
+
+
+def test_shop_stock_view_is_data(new_game):
+    game = new_game()
+    game.command("visit the shopkeeper")
+    result = game.command("browse")
+    assert result["events"][0]["kind"] == "stock" and result["events"][0]["stock"]

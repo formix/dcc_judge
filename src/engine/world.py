@@ -706,16 +706,58 @@ class World:
                                 "text": money_text(c.cp)} for c in chars],
                 "party_cp": party, "party_text": money_text(party)}
 
-    def shop_view(self) -> dict[str, Any]:
-        """What the shop here sells, with prices in copper pieces."""
+    # ── the shop (design 13) ────────────────────────────────────────────────
+    def shop_item(self, name: str, quantity: int = 1) -> Item:
+        """A fresh item of something the shop here sells: catalog or custom."""
+        from engine.adventure import parse_item
         from engine.catalog import make_item
+        for custom in self.scene["shop"].get("custom", []):
+            if label_text(custom["name"], "light") == name:
+                return parse_item({**custom, "quantity": quantity})
+        return make_item(name, quantity)
+
+    def restock_shop(self) -> dict[str, Any]:
+        """Bring the shop here up to date: trade goods are restocked each game day,
+        and the day's tools, weapons and armor are drawn anew."""
         shop = self.scene["shop"]
-        prices = {name: make_item(name).cost_cp for name in shop.get("stock", [])}
-        for custom in shop.get("custom", []):
-            name = custom["name"]["light"] if isinstance(custom["name"], dict) else custom["name"]
-            prices[name] = custom.get("cost_cp", 0)
-        return {"sells": prices, "buys": "anything ordinary, at half its cost (haggling can change that)",
-                "purse": self.purse_view()}
+        key = f"_shop:{self.state.scene}"
+        day = self.now // 1440
+        stock = self.state.flags.get(key)
+        if stock and stock["day"] == day:
+            return stock
+        items = [{"name": name, "category": "trade goods", "quantity": qty}
+                 for name, qty in shop.get("trade_goods", {}).items()]
+        for category, spec in shop.get("daily", {}).items():
+            pool = list(spec["from"])
+            for name in self.dice.rng.sample(pool, min(spec.get("count", 1), len(pool))):
+                items.append({"name": name, "category": category,
+                              "quantity": max(1, self.dice.roll(spec.get("quantity", 1)).total)})
+        stock = {"day": day, "items": items}
+        self.state.flags[key] = stock
+        return stock
+
+    def stock_view(self) -> list[dict[str, Any]] | None:
+        """The shop's stock as data: name, category, quantity left, price. None until
+        the shop has been visited today."""
+        stock = self.state.flags.get(f"_shop:{self.state.scene}")
+        if not stock or stock["day"] != self.now // 1440:
+            return None
+        out = []
+        for entry in stock["items"]:
+            item = self.shop_item(entry["name"])
+            row = {"name": entry["name"], "category": entry["category"], "quantity": entry["quantity"],
+                   "price_cp": item.cost_cp, "price": money_text(item.cost_cp)}
+            if "weapon" in item.rules:
+                row["damage"] = item.rules["weapon"].get("damage")
+            if "armor" in item.rules:
+                row["ac"] = item.rules["armor"].get("ac", 0)
+            out.append(row)
+        return out
+
+    def shop_view(self) -> dict[str, Any]:
+        """The shop for the Judge's context: stock as data, never as prose."""
+        return {"stock": self.stock_view(), "buys": "anything ordinary, at half its cost (haggling can change that)",
+                "purse": self.purse_view(), "list_with": "the shop_stock tool, or the browse action"}
 
     def render_scene(self, view: dict[str, Any] | None = None) -> str:
         view = view or self.scene_view()
@@ -734,11 +776,6 @@ class World:
             lines.append("Ways on: " + "; ".join(exits) + ".")
         if view.get("available_actions"):
             lines.append("You can: " + "; ".join(a["label"] for a in view["available_actions"]) + ".")
-        if view.get("shop"):
-            purse = view["shop"]["purse"]
-            lines.append("Money: " + "; ".join(f"{c['name']} {c['text']}" for c in purse["characters"])
-                         + f" (party total {purse['party_text']}).")
-            lines.append("A trader here sells: " + ", ".join(f"{k} ({v} cp)" for k, v in view["shop"]["sells"].items()) + ".")
         if view["history"]:
             lines.append("Earlier here: " + " ".join(view["history"][-3:]))
         return "\n".join(lines)

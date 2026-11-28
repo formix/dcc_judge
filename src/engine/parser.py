@@ -22,6 +22,8 @@ SIMPLE: list[tuple[str, str]] = [
     (r"^(?:defend|guard|parry|hold)$", "defend"),
     (r"^(?:search|search around|search the room|search here)$", "search"),
     (r"^(?:fight on|continue|next round|keep fighting)$", "defend_keep"),
+    (r"^(?:browse|browse the wares|browse wares|wares|list|list wares|stock|show wares|what'?s for sale|"
+     r"what do you sell|what is for sale|look at the wares|see the wares)\??$", "browse"),
     (r"^(?:glean|glean rumou?rs|gather rumou?rs|listen for rumou?rs|ask (?:about|for) rumou?rs|rumou?rs|"
      r"listen to the talk|listen to gossip|ask around)$", "glean"),
 ]

@@ -263,6 +263,17 @@ class Game:
             }
         return context
 
+    def shop_stock(self) -> dict[str, Any]:
+        """Everything the shop here sells today: name, category, quantity left and
+        price. Restocks first if a new day has begun. No game time passes."""
+        world = self.world()
+        if not world.scene.get("shop"):
+            return {"ok": False, "errors": ["The party is not at a shop."]}
+        world.restock_shop()
+        self.store.save(self.state)
+        return {"ok": True, "display_only": True, "day": self.state.clock // 1440 + 1,
+                "stock": world.stock_view(), "purse": world.purse_view()}
+
     def inventory(self, character: str | None = None) -> dict[str, Any]:
         """The party's actual belongings, or one character's. No game time passes."""
         world = self.world()

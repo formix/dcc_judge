@@ -23,12 +23,13 @@ from models.item import Item, text_for
 from rulesets.game import MATERIALS, RULES, material
 
 FREE_TYPES = {"look", "examine", "inventory", "status", "leader", "take", "drop", "give", "equip",
-              "unequip", "extinguish", "fill", "rank", "talk", "buy", "sell"}
+              "unequip", "extinguish", "fill", "rank", "talk", "buy", "sell", "browse"}
 TIMED_TYPES = {"move", "search", "force", "break", "pick_lock", "burn", "interact", "improvise", "wait",
                "repair", "heal", "glean"}
 COMBAT_TYPES = {"attack", "defend", "flee"}
 ALL_TYPES = FREE_TYPES | TIMED_TYPES | COMBAT_TYPES | {"light"}
 NO_ROUND_TYPES = {"look", "examine", "inventory", "status", "leader", "rank", "talk"}
+CATEGORY_TITLES = {"trade goods": "Trade goods", "tools": "Tools", "weapons": "Weapons", "armor": "Armor"}
 IMPROVISE_OPS = {"transform", "add_furnishing", "record_fact", "set_fire", "consequence"}
 
 
@@ -227,7 +228,7 @@ class Actions:
             kind = action["type"]
             if self.state.phase == "combat":
                 if kind in ("move", "search", "force", "break", "pick_lock", "burn", "interact", "improvise",
-                            "repair", "heal", "buy", "sell", "glean"):
+                            "repair", "heal", "buy", "sell", "glean", "browse"):
                     raise ActionError(f"You cannot {kind} in the middle of a fight. Attack, defend or flee.")
                 if kind not in NO_ROUND_TYPES:
                     round_needed = True
@@ -706,6 +707,9 @@ class Actions:
         w.ensure_scene_groups(sid)
         self._passive_checks()
         w.emit("scene", w.render_scene())
+        if w.scene.get("shop"):
+            w.restock_shop()
+            self.emit_stock()
         hostile = [g for g in w.groups_in() if g["attitude"] == "hostile"]
         unaware = [g for g in w.groups_in() if g["attitude"] == "unaware"]
         if unaware and not silent:
@@ -974,30 +978,42 @@ class Actions:
                 break
         return paid
 
+    def do_browse(self, action):
+        """List the shop's wares as data (design 13): never as prose."""
+        self._shop()
+        self.world.restock_shop()
+        self.emit_stock()
+
+    def emit_stock(self) -> None:
+        rows = self.world.stock_view() or []
+        lines, last = [], None
+        for row in rows:
+            if row["category"] != last:
+                last = row["category"]
+                lines.append(CATEGORY_TITLES.get(last, last.capitalize()) + ":")
+            extra = f", {row['damage']}" if row.get("damage") else (f", AC +{row['ac']}" if "ac" in row else "")
+            lines.append(f"  - {row['name']}: {row['quantity']} left, {row['price']} each{extra}")
+        self.world.emit("stock", "\n".join(lines) or "The shelves are bare.", stock=rows)
+
     def do_buy(self, action):
-        from engine.catalog import make_item
-        shop = self._shop()
+        self._shop()
         char = self.actor(action)
-        stock = {s: None for s in shop.get("stock", [])}
-        for custom in shop.get("custom", []):
-            stock[custom["name"]["light"] if isinstance(custom["name"], dict) else custom["name"]] = custom
-        name = resolve_name(str(action.get("target", "")), [(s, [s]) for s in stock])
+        stock = self.world.restock_shop()["items"]
+        name = resolve_name(str(action.get("target", "")), [(e["name"], [e["name"]]) for e in stock])
         if name is None:
-            raise ActionError("The shop has no such thing. It sells: " + ", ".join(stock))
+            raise ActionError("The shop has no such thing today. Browse the wares to see what it has.")
+        entry = next(e for e in stock if e["name"] == name)
         qty = max(1, int(action.get("quantity", 1)))
-        limit = shop.get("limited", {}).get(name)
-        sold = self.state.flags.get(f"_sold:{name}", 0)
-        if limit is not None and sold + qty > limit:
-            raise ActionError(f"Only {max(0, limit - sold)} left.")
-        if stock[name] is None:
-            item = make_item(name, qty)
-        else:
-            item = parse_item({**stock[name], "quantity": qty})
+        if entry["quantity"] <= 0:
+            raise ActionError(f"The {name} is sold out for today.")
+        if qty > entry["quantity"]:
+            raise ActionError(f"Only {entry['quantity']} {name} left today.")
+        item = self.world.shop_item(name, qty)
         price = item.cost_cp * qty
         if not self.world.can_carry(char, item):
             raise ActionError(f"{char.name} has no room for that.")
         paid = self._pay(char, price)
-        self.state.flags[f"_sold:{name}"] = sold + qty
+        entry["quantity"] -= qty
         self.world.add_item(item, {"char": char.id, "slot": "pack"})
         helpers = [f"{c.name} adds {share} cp" for c, share in paid if c.id != char.id]
         self.world.emit("buy", f"{char.name} buys {qty} {name} for {price} cp"

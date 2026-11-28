@@ -832,6 +832,13 @@ The following are **[A]**:
 - The village is the same for every adventure. The engine provides its scenes
   (`data/village.yaml`), and adventure text may use `{village}` and `{tavern}`.
 - The shopkeeper's stock and prices are part of the village, not the adventure.
+- **The shop** has a standard set of basic trade goods (torches, rations and other
+  basics), restocked every day, and a set of tools, weapons and armor, shields
+  included, that changes every day. Its wares are always shown as a list with
+  each item's available quantity and price, never described in prose.
+- Quantities, the daily pools and how many of each are offered are set in
+  `data/village.yaml`. A game day is every 24 game hours from the start of the
+  game.
 - Village scenes are safe and lit: no random encounters and no fights.
 - The road takes the hook's travel time, 3 hours each way by default. Travel
   burns no torch time and has no encounter checks. An adventure's deadline

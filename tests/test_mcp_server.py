@@ -43,6 +43,10 @@ def test_engine_server_over_stdio(tmp_path):
                 assert unknown["handled"] is False
                 acted = await call("act", proposal=json.dumps({"actions": [{"type": "look"}]}))
                 assert acted["ok"]
+                assert (await call("shop_stock"))["ok"] is False      # in the tavern
+                await call("command", text="visit the shopkeeper")
+                stock = await call("shop_stock")
+                assert stock["display_only"] and any(r["name"] == "Torch" for r in stock["stock"])
                 inv = await call("inventory")
                 assert inv["display_only"] and len(inv["inventory"]) == 4
                 assert {"hands", "body", "head"} == set(inv["inventory"][0]["equipment"])
